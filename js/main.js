@@ -235,11 +235,20 @@ export function initApp() {
 
       if (route === ROUTES.RESULTADOS) {
         let preQuizData = null;
-        if (store.getState().preQuiz.completed) {
+        let postQuizData = null;
+        const currentState = store.getState();
+        if (currentState.preQuiz.completed) {
           try {
             preQuizData = await dataLoader.loadQuiz('pre', { signal: context.signal });
           } catch {
             preQuizData = null;
+          }
+        }
+        if (currentState.postQuiz.completed) {
+          try {
+            postQuizData = await dataLoader.loadQuiz('post', { signal: context.signal });
+          } catch {
+            postQuizData = null;
           }
         }
         if (context.isStale()) {
@@ -248,6 +257,7 @@ export function initApp() {
         return renderResultsView(mainEl, {
           state: store.getState(),
           preQuizData,
+          postQuizData,
           onNavigate: (target) => router.navigate(target),
           onOpenGlossary: (opts) => glossaryDrawer.open(opts)
         });

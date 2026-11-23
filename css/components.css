@@ -646,16 +646,87 @@
 
 .objective-breakdown-row {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
+  flex-direction: column;
+  gap: var(--space-2);
   min-width: 0;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3);
   border-radius: var(--radius-sm);
   background-color: var(--color-bg);
   border: 1px solid var(--color-border);
   font-variant-numeric: tabular-nums;
+}
+
+.objective-review-details {
+  width: 100%;
+  min-width: 0;
+}
+
+.objective-review-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  cursor: pointer;
+  list-style: none;
+  min-height: var(--touch-target);
+  padding: var(--space-1) 0;
+}
+
+.objective-review-summary::-webkit-details-marker {
+  display: none;
+}
+
+.objective-review-summary::before {
+  content: '▸';
+  color: var(--color-info);
+  margin-right: var(--space-2);
+  font-weight: 700;
+}
+
+.objective-review-details[open] > .objective-review-summary::before {
+  content: '▾';
+}
+
+.objective-summary-title {
+  flex: 1 1 12rem;
+  font-weight: 600;
+}
+
+.objective-summary-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.objective-review-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.objective-mistake-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.objective-mistake-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-danger);
 }
 
 .comparison-delta {

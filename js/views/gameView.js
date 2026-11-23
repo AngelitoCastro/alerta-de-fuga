@@ -1,7 +1,8 @@
 import {
   createInitialAttempt,
   applyDecision,
-  calculateMaxBaseLevel
+  calculateMaxBaseLevel,
+  normalizeLevelMaxBase
 } from '../engine/scoring.js';
 import { announce } from '../engine/a11y.js';
 
@@ -334,9 +335,16 @@ export function renderGameView(
     const scorableCount = Number.isInteger(completionPayload?.scorableDecisionsCount) && completionPayload.scorableDecisionsCount > 0
       ? completionPayload.scorableDecisionsCount
       : Math.max(1, attempt.decisions.length);
-    const maxBaseLevel = calculateMaxBaseLevel(scorableCount);
+    const standardDecisions =
+      levelNumber === 4 && Array.isArray(levelData.phases) && levelData.phases.length > 0
+        ? levelData.phases.length
+        : null;
+    const maxBaseLevel = normalizeLevelMaxBase(scorableCount, standardDecisions);
+    const normalizedBaseScore = Math.min(attempt.baseScore, maxBaseLevel);
     attempt = {
       ...attempt,
+      baseScore: normalizedBaseScore,
+      visibleScore: normalizedBaseScore + attempt.optionalTimeBonus,
       completed: true
     };
     onAttemptFinished?.(attempt, maxBaseLevel);
@@ -397,7 +405,11 @@ export function renderGameView(
         penaltyOnWrongAnswer: payload.penaltyOnWrongAnswer,
         objectiveId: payload.objectiveId,
         timerEnabled: isTimerEnabled(),
-        elapsedMs
+        elapsedMs,
+        challengeId: payload.challengeId,
+        title: payload.title,
+        glossaryTermId: payload.glossaryTermId,
+        correctControl: payload.feedback?.correctControl
       });
       syncHud();
 

@@ -204,6 +204,7 @@ export function mount(container, levelData, callbacks = {}) {
           callbacks.onDecision(
             {
               challengeId: challenge.id,
+              title: challenge.title,
               objectiveId: challenge.objectiveId,
               selectedOptionId: option.id,
               isCorrect,

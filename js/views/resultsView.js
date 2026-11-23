@@ -45,9 +45,70 @@ function formatSignedDelta(delta) {
   return String(delta);
 }
 
+function buildObjectiveReviewData(state, postQuizData) {
+  const byObjective = {};
+  for (const objId of OBJECTIVES) {
+    byObjective[objId] = {
+      gameCorrect: 0,
+      gameTotal: 0,
+      postCorrect: 0,
+      postTotal: 0,
+      mistakes: []
+    };
+  }
+
+  for (const levelNum of [1, 2, 3, 4]) {
+    const attempt = state?.levels?.[levelNum]?.acceptedAttempt;
+    if (!attempt || attempt.failed === true || attempt.completed === false || !Array.isArray(attempt.decisions)) {
+      continue;
+    }
+    attempt.decisions.forEach((dec, idx) => {
+      const bucket = byObjective[dec?.objectiveId];
+      if (!bucket) return;
+      bucket.gameTotal += 1;
+      if (dec.isCorrect) {
+        bucket.gameCorrect += 1;
+      } else {
+        bucket.mistakes.push({
+          source: `Nivel ${levelNum}`,
+          title: dec.title || (dec.challengeId ? `Reto ${dec.challengeId}` : `Decisión #${idx + 1} del Nivel ${levelNum}`),
+          explanation: dec.correctControl || OBJECTIVE_INFO[dec.objectiveId].recommendation,
+          glossaryTermId: dec.glossaryTermId || null
+        });
+      }
+    });
+  }
+
+  const postQuestions = Array.isArray(postQuizData?.questions) ? postQuizData.questions : [];
+  const postDecisions = state?.postQuiz?.completed && Array.isArray(state?.postQuiz?.decisions)
+    ? state.postQuiz.decisions
+    : [];
+
+  for (const dec of postDecisions) {
+    const bucket = byObjective[dec?.objectiveId];
+    if (!bucket) continue;
+    bucket.postTotal += 1;
+    if (dec.isCorrect) {
+      bucket.postCorrect += 1;
+    } else {
+      const matchedQ = postQuestions.find(
+        (q) => (dec.questionId && q.id === dec.questionId) || q.objectiveId === dec.objectiveId
+      );
+      bucket.mistakes.push({
+        source: 'Test posterior',
+        title: matchedQ?.prompt || `Pregunta del test posterior (${dec.objectiveId})`,
+        explanation: matchedQ?.explanation || OBJECTIVE_INFO[dec.objectiveId].recommendation,
+        glossaryTermId: matchedQ?.glossaryTermId || null
+      });
+    }
+  }
+
+  return byObjective;
+}
+
 export function renderResultsView(
   container,
-  { state, preQuizData = null, onNavigate, onOpenGlossary } = {}
+  { state, preQuizData = null, postQuizData = null, onNavigate, onOpenGlossary } = {}
 ) {
   const doc = container.ownerDocument || globalThis.document;
   const cleanups = [];
@@ -62,6 +123,7 @@ export function renderResultsView(
     .filter(Boolean);
 
   const summary = calculateFinalSummary(acceptedAttempts, state?.postQuiz, state?.preQuiz);
+  const objectiveReview = buildObjectiveReviewData(state, postQuizData);
 
   const section = createEl(doc, 'section', 'view-results');
   section.setAttribute('aria-labelledby', 'results-title');
@@ -101,7 +163,7 @@ export function renderResultsView(
   summaryCard.append(h1, rankBadge, disclaimer, breakdownGrid);
   section.appendChild(summaryCard);
 
-  // Tarjetas paralelas: comparación de tests + objetivo más débil
+  // Tarjetas paralelas: comparación de tests + guía de repaso por objetivo
   const resultsGrid = createEl(doc, 'div', 'results-grid');
 
   // Comparación test previo / posterior
@@ -175,9 +237,9 @@ export function renderResultsView(
     quizCard.appendChild(details);
   }
 
-  // Objetivo más débil y desglose O1-O5
+  // Guía de repaso por objetivo (desempeño separado + errores desplegables con glosario)
   const weakCard = createEl(doc, 'article', 'card weakest-objective-card');
-  weakCard.appendChild(createEl(doc, 'h2', '', 'Desempeño por objetivo'));
+  weakCard.appendChild(createEl(doc, 'h2', '', 'Guía de repaso por objetivo'));
 
   const weak = summary.weakestObjective;
   const weakInfo = OBJECTIVE_INFO[weak.objectiveId] || OBJECTIVE_INFO.O1;
@@ -186,23 +248,85 @@ export function renderResultsView(
     : 'Aún no hay decisiones evaluadas para determinar el objetivo más débil.';
   weakCard.append(
     createEl(doc, 'p', '', weakSummary),
-    createEl(doc, 'p', 'text-muted', `Fuente del cálculo: ${weak.sourceDescription}.`)
+    createEl(
+      doc,
+      'p',
+      'text-muted',
+      `Fuente del cálculo: ${weak.sourceDescription}. Abre cada objetivo para revisar aciertos por separado y consultar tus fallos.`
+    )
   );
 
   const objList = createEl(doc, 'ul', 'objective-breakdown-list');
   for (const objId of OBJECTIVES) {
     const entry = weak.breakdown[objId] || { correct: 0, total: 0, rate: null };
+    const rev = objectiveReview[objId];
     const info = OBJECTIVE_INFO[objId];
     const row = createEl(doc, 'li', 'objective-breakdown-row');
-    row.append(
-      createEl(doc, 'span', '', `${objId}: ${info.name}`),
+
+    const details = createEl(doc, 'details', 'objective-review-details');
+    const summaryToggle = createEl(doc, 'summary', 'objective-review-summary');
+
+    summaryToggle.appendChild(createEl(doc, 'span', 'objective-summary-title', `${objId}: ${info.name}`));
+
+    const metrics = createEl(doc, 'span', 'objective-summary-metrics');
+    const gameLabel = rev.gameTotal > 0 ? `Partida: ${rev.gameCorrect}/${rev.gameTotal}` : 'Partida: —';
+    const postLabel = rev.postTotal > 0 ? `Test posterior: ${rev.postCorrect}/${rev.postTotal}` : 'Test posterior: —';
+    const totalLabel = entry.total > 0 ? `Total: ${Math.round(entry.rate * 100)} %` : 'Sin datos';
+
+    metrics.append(
+      createEl(doc, 'span', 'badge badge--neutral', gameLabel),
+      createEl(doc, 'span', 'badge badge--neutral', postLabel),
       createEl(
         doc,
         'span',
-        'badge badge--neutral',
-        entry.total > 0 ? `${entry.correct}/${entry.total} (${Math.round(entry.rate * 100)} %)` : 'Sin datos'
+        `badge ${entry.total > 0 ? (rev.mistakes.length === 0 ? 'badge--safe' : 'badge--warning') : 'badge--neutral'}`,
+        totalLabel
       )
     );
+    summaryToggle.appendChild(metrics);
+
+    const body = createEl(doc, 'div', 'objective-review-body');
+    if (rev.mistakes.length === 0) {
+      body.appendChild(
+        createEl(
+          doc,
+          'p',
+          'text-muted',
+          entry.total > 0
+            ? '✓ Sin errores registrados en este objetivo durante el intento aceptado y el test posterior.'
+            : 'Aún no existen decisiones registradas para este objetivo.'
+        )
+      );
+    } else {
+      body.appendChild(
+        createEl(
+          doc,
+          'p',
+          'text-muted',
+          `Elementos a repasar (${rev.mistakes.length}):`
+        )
+      );
+      const mistakeList = createEl(doc, 'ul', 'objective-mistake-list');
+      for (const m of rev.mistakes) {
+        const li = createEl(doc, 'li', 'objective-mistake-item');
+        li.append(
+          createEl(doc, 'span', 'badge badge--danger', m.source),
+          createEl(doc, 'strong', '', m.title),
+          createEl(doc, 'p', 'text-muted', m.explanation)
+        );
+        if (m.glossaryTermId) {
+          const gBtn = createEl(doc, 'button', 'btn btn--secondary btn--sm', `Abrir término en glosario (${m.glossaryTermId})`);
+          gBtn.type = 'button';
+          listen(gBtn, 'click', () => onOpenGlossary?.({ triggerEl: gBtn, termId: m.glossaryTermId }));
+          li.appendChild(gBtn);
+        }
+        mistakeList.appendChild(li);
+      }
+      body.appendChild(mistakeList);
+    }
+
+    details.append(summaryToggle, body);
+    row.appendChild(details);
     objList.appendChild(row);
   }
   weakCard.appendChild(objList);

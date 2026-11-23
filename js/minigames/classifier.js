@@ -79,6 +79,65 @@ export function mount(container, levelData, callbacks = {}) {
     session.cleanups.length = 0;
   }
 
+  function buildAssignedList(bucketId) {
+    const assignedItems = assignedByBucket.get(bucketId) || [];
+    const list = createEl(doc, 'ul', 'bucket-assigned-list');
+    for (const item of assignedItems) {
+      const li = createEl(
+        doc,
+        'li',
+        'assigned-chip',
+        `${item.isCorrect ? '✓' : '✕'} ${item.title}`
+      );
+      list.appendChild(li);
+    }
+    return list;
+  }
+
+  function renderCompletedSummary() {
+    const wrapper = createEl(doc, 'div', 'classifier-layout');
+
+    const progressRow = createEl(doc, 'div', 'classifier-progress');
+    progressRow.append(
+      createEl(doc, 'span', '', `Registros clasificados: ${challenges.length} de ${challenges.length}`),
+      createEl(doc, 'span', 'badge badge--safe', 'Clasificación finalizada')
+    );
+    wrapper.appendChild(progressRow);
+
+    const summaryIntro = createEl(
+      doc,
+      'p',
+      'classifier-instructions',
+      'Resumen de los ocho registros asignados durante este intento (✓ correcto, ✕ incorrecto).'
+    );
+    wrapper.appendChild(summaryIntro);
+
+    const bucketsGrid = createEl(doc, 'div', 'classifier-buckets');
+    for (const bucket of buckets) {
+      const bucketCard = createEl(doc, 'section', 'bucket-card');
+      bucketCard.setAttribute('aria-labelledby', `bucket-summary-heading-${bucket.id}`);
+
+      const bucketHeader = createEl(doc, 'div', 'bucket-header');
+      const heading = createEl(doc, 'h3', '', bucket.label);
+      heading.id = `bucket-summary-heading-${bucket.id}`;
+      const desc = createEl(doc, 'p', 'text-muted', bucket.description);
+      bucketHeader.append(heading, desc);
+      bucketCard.appendChild(bucketHeader);
+
+      const assignedItems = assignedByBucket.get(bucket.id) || [];
+      if (assignedItems.length > 0) {
+        bucketCard.appendChild(buildAssignedList(bucket.id));
+      } else {
+        bucketCard.appendChild(createEl(doc, 'p', 'text-muted', 'Sin registros asignados a esta categoría.'));
+      }
+
+      bucketsGrid.appendChild(bucketCard);
+    }
+
+    wrapper.appendChild(bucketsGrid);
+    container.replaceChildren(wrapper);
+  }
+
   function render() {
     if (!session.active) {
       return;
@@ -88,6 +147,7 @@ export function mount(container, levelData, callbacks = {}) {
     session.locked = false;
 
     if (session.currentIndex >= challenges.length) {
+      renderCompletedSummary();
       if (typeof callbacks.onLevelComplete === 'function') {
         callbacks.onLevelComplete({
           scorableDecisionsCount: challenges.length,
@@ -198,6 +258,7 @@ export function mount(container, levelData, callbacks = {}) {
 
     const bucketsGrid = createEl(doc, 'div', 'classifier-buckets');
     const bucketButtons = [];
+    const bucketListSlots = new Map();
 
     function handleAssign(bucket) {
       if (!session.active || session.locked) {
@@ -220,6 +281,12 @@ export function mount(container, levelData, callbacks = {}) {
         isCorrect
       });
 
+      // Actualizar inmediatamente la lista visual del contenedor asignado (incluyendo el 8.º registro)
+      const listSlot = bucketListSlots.get(bucket.id);
+      if (listSlot) {
+        listSlot.replaceChildren(buildAssignedList(bucket.id));
+      }
+
       card.classList.add('is-assigned');
       selectCardBtn.disabled = true;
       for (const btn of bucketButtons) {
@@ -238,6 +305,7 @@ export function mount(container, levelData, callbacks = {}) {
         callbacks.onDecision(
           {
             challengeId: challenge.id,
+            title: challenge.title,
             objectiveId: challenge.objectiveId,
             selectedOptionId: bucket.id,
             isCorrect,
@@ -264,20 +332,13 @@ export function mount(container, levelData, callbacks = {}) {
       bucketHeader.append(heading, desc);
       bucketCard.appendChild(bucketHeader);
 
+      const listSlot = createEl(doc, 'div');
       const assignedItems = assignedByBucket.get(bucket.id) || [];
       if (assignedItems.length > 0) {
-        const list = createEl(doc, 'ul', 'bucket-assigned-list');
-        for (const item of assignedItems) {
-          const li = createEl(
-            doc,
-            'li',
-            'assigned-chip',
-            `${item.isCorrect ? '✓' : '✕'} ${item.title}`
-          );
-          list.appendChild(li);
-        }
-        bucketCard.appendChild(list);
+        listSlot.appendChild(buildAssignedList(bucket.id));
       }
+      bucketListSlots.set(bucket.id, listSlot);
+      bucketCard.appendChild(listSlot);
 
       const assignBtn = createEl(doc, 'button', 'btn btn--secondary bucket-assign-btn', bucket.label);
       assignBtn.type = 'button';

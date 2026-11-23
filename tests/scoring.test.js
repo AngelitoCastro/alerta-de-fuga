@@ -5,6 +5,7 @@ import {
   RANK_THRESHOLDS,
   OBJECTIVES,
   calculateMaxBaseLevel,
+  normalizeLevelMaxBase,
   calculateTimeBonus,
   createInitialAttempt,
   applyDecision,
@@ -316,4 +317,31 @@ test('calculateFinalSummary excludes failed/incomplete attempts and never sums d
   assert.equal(summary.weakestObjective.objectiveId, 'O1');
   assert.equal(summary.weakestObjective.breakdown.O1.correct, 1);
   assert.equal(summary.weakestObjective.breakdown.O1.total, 3);
+});
+
+test('normalizeLevelMaxBase keeps Level 4 fixed at 700 across both optimal (6-step) and observations (7-step) closures', () => {
+  const optimalMax = normalizeLevelMaxBase(6, 6);
+  const observationsMax = normalizeLevelMaxBase(7, 6);
+  assert.equal(optimalMax, 700);
+  assert.equal(observationsMax, 700);
+
+  const baseLevels = [
+    { levelId: 1, baseScore: 700, optionalTimeBonus: 0, visibleScore: 700, maxBaseLevel: 700, completed: true, failed: false, decisions: [] },
+    { levelId: 2, baseScore: 800, optionalTimeBonus: 0, visibleScore: 800, maxBaseLevel: 900, completed: true, failed: false, decisions: [] },
+    { levelId: 3, baseScore: 550, optionalTimeBonus: 0, visibleScore: 550, maxBaseLevel: 700, completed: true, failed: false, decisions: [] }
+  ];
+
+  const obsSummary = calculateFinalSummary([
+    ...baseLevels,
+    { levelId: 4, baseScore: 550, optionalTimeBonus: 0, visibleScore: 550, maxBaseLevel: observationsMax, completed: true, failed: false, decisions: [] }
+  ]);
+  const optSummary = calculateFinalSummary([
+    ...baseLevels,
+    { levelId: 4, baseScore: 700, optionalTimeBonus: 0, visibleScore: 700, maxBaseLevel: optimalMax, completed: true, failed: false, decisions: [] }
+  ]);
+
+  assert.equal(obsSummary.totalMaxBaseLevel, 3000);
+  assert.equal(optSummary.totalMaxBaseLevel, 3000);
+  assert.equal(Number(obsSummary.basePercent.toFixed(1)), 86.7);
+  assert.equal(obsSummary.rank, 'Arquitecto Criptográfico');
 });

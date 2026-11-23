@@ -266,6 +266,7 @@ export function mount(container, levelData, callbacks = {}) {
         callbacks.onDecision(
           {
             challengeId: challenge.id,
+            title: `${challenge.title} (${challenge.filePath})`,
             objectiveId: challenge.objectiveId,
             selectedOptionId: `${selectedLineNumber}:${selectedMitigationId}`,
             isCorrect,

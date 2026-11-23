@@ -96,7 +96,7 @@
           "label": "Cambiar el repositorio a privado y borrar el último commit sin rotar las credenciales expuestas en código.",
           "isCorrect": false,
           "exposureDelta": 25,
-          "nextNodeId": "n4-eva-1",
+          "nextNodeId": "n4-eva-rev",
           "feedback": {
             "attackerView": "Quien ya obtuvo el archivo .env antes del cambio de visibilidad conservaría credenciales plenamente válidas.",
             "why": "Ocultar el repositorio o eliminar un commit no invalida secretos ya copiados; además, un .env o variable de entorno simple carece de rotación controlada.",
@@ -111,7 +111,7 @@
           "label": "Programar la rotación para el próximo trimestre con el fin de evitar cambios urgentes de configuración.",
           "isCorrect": false,
           "exposureDelta": 20,
-          "nextNodeId": "n4-eva-1",
+          "nextNodeId": "n4-eva-rev",
           "feedback": {
             "attackerView": "Cada hora sin revocar las credenciales filtradas mantiene abierta una ventana de uso indebido contra la infraestructura de NovaPay.",
             "why": "Retrasar la rotación sin justificación técnica ante exposición confirmada prolonga el riesgo innecesariamente.",
@@ -119,6 +119,61 @@
           },
           "glossaryTermId": "gestion-secretos",
           "owaspRef": "https://top10.owasp.org/2025/A04_2025-Cryptographic_Failures/"
+        }
+      ]
+    },
+    "n4-eva-rev": {
+      "id": "n4-eva-rev",
+      "phase": "Evaluación",
+      "title": "Verificación de revocación de credenciales aún activas",
+      "scenario": "Dado que en Contención no se revocaron de inmediato las credenciales filtradas, el monitoreo detecta sesiones vigentes con esas llaves. Debes comprobar la revocación y delimitar qué datos quedaron expuestos antes de pasar a Protección.",
+      "isTerminal": false,
+      "scorable": true,
+      "options": [
+        {
+          "id": "a",
+          "objectiveId": "O2",
+          "label": "Aplicar hash al PAN en la base y dar por resuelta la exposición de credenciales sin revisar sesiones ni bitácoras activas.",
+          "isCorrect": false,
+          "exposureDelta": 20,
+          "nextNodeId": "n4-pro-1",
+          "feedback": {
+            "attackerView": "Mientras las llaves sigan activas y sin auditar sesiones, un actor con las credenciales copiadas podría continuar accediendo a los registros.",
+            "why": "Hashear el PAN no sustituye la revocación de credenciales ni el conjunto de controles exigidos por PCI DSS.",
+            "correctControl": "Revocar de inmediato las llaves activas, auditar bitácoras de acceso y aplicar minimización o tokenización dentro de PCI DSS."
+          },
+          "glossaryTermId": "tokenizacion",
+          "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"
+        },
+        {
+          "id": "b",
+          "objectiveId": "O4",
+          "label": "Confirmar revocación inmediata, auditar sesiones activas y verificar ausencia de CVV.",
+          "isCorrect": true,
+          "exposureDelta": 0,
+          "nextNodeId": "n4-pro-1",
+          "feedback": {
+            "attackerView": "Detener las sesiones vigentes y verificar qué servicios usaron las llaves corta el acceso indebido antes de re-cifrar.",
+            "why": "Comprobar el estado real de revocación corrige la brecha dejada en Contención y permite evaluar con precisión el impacto sobre registros y cumplimiento PCI DSS.",
+            "correctControl": "Revocar llaves en el gestor de secretos, cerrar sesiones heredadas, auditar accesos y confirmar que nunca se almacenó CVV."
+          },
+          "glossaryTermId": "gestion-secretos",
+          "owaspRef": "https://top10.owasp.org/2025/A04_2025-Cryptographic_Failures/"
+        },
+        {
+          "id": "c",
+          "objectiveId": "O2",
+          "label": "Guardar una copia cifrada del CVV de los clientes afectados y posponer la revisión de credenciales hasta el cierre.",
+          "isCorrect": false,
+          "exposureDelta": 25,
+          "nextNodeId": "n4-pro-1",
+          "feedback": {
+            "attackerView": "Almacenar CVV tras la autorización crea un objetivo de impacto máximo mientras las credenciales expuestas siguen vigentes.",
+            "why": "PCI DSS prohíbe conservar el CVV después de la autorización, incluso cifrado, y retrasar la revocación mantiene abierto el incidente.",
+            "correctControl": "Purgar cualquier rastro de CVV, revocar las credenciales activas y documentar el alcance exacto de accesos."
+          },
+          "glossaryTermId": "minimizacion-datos",
+          "owaspRef": "https://www.pcisecuritystandards.org/faqs/are-merchants-allowed-to-request-card-verification-codes-values-from-cardholders/"
         }
       ]
     },

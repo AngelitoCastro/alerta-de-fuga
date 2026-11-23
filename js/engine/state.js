@@ -74,6 +74,18 @@ function cloneState(state) {
   };
 }
 
+function cloneDecisionItem(d) {
+  const entry = {
+    objectiveId: d.objectiveId,
+    isCorrect: Boolean(d.isCorrect)
+  };
+  if (typeof d.challengeId === 'string' && d.challengeId) entry.challengeId = d.challengeId;
+  if (typeof d.title === 'string' && d.title) entry.title = d.title;
+  if (typeof d.glossaryTermId === 'string' && d.glossaryTermId) entry.glossaryTermId = d.glossaryTermId;
+  if (typeof d.correctControl === 'string' && d.correctControl) entry.correctControl = d.correctControl;
+  return entry;
+}
+
 function cloneLevelEntry(entry) {
   return {
     attemptsCount: entry.attemptsCount,
@@ -90,10 +102,7 @@ function cloneLevelEntry(entry) {
         exposure: entry.acceptedAttempt.exposure,
         failed: false,
         completed: true,
-        decisions: entry.acceptedAttempt.decisions.map((d) => ({
-          objectiveId: d.objectiveId,
-          isCorrect: Boolean(d.isCorrect)
-        }))
+        decisions: entry.acceptedAttempt.decisions.map(cloneDecisionItem)
       }
       : null
   };
@@ -111,10 +120,23 @@ function sanitizeLevelDecisions(rawDecisions) {
     if (!OBJECTIVE_SET.has(item.objectiveId) || typeof item.isCorrect !== 'boolean') {
       return null;
     }
-    sanitized.push({
+    const clean = {
       objectiveId: item.objectiveId,
       isCorrect: item.isCorrect
-    });
+    };
+    if (hasOwn(item, 'challengeId') && typeof item.challengeId === 'string' && item.challengeId.trim()) {
+      clean.challengeId = item.challengeId.trim().slice(0, 64);
+    }
+    if (hasOwn(item, 'title') && typeof item.title === 'string' && item.title.trim()) {
+      clean.title = item.title.trim().slice(0, 160);
+    }
+    if (hasOwn(item, 'glossaryTermId') && typeof item.glossaryTermId === 'string' && item.glossaryTermId.trim()) {
+      clean.glossaryTermId = item.glossaryTermId.trim().slice(0, 64);
+    }
+    if (hasOwn(item, 'correctControl') && typeof item.correctControl === 'string' && item.correctControl.trim()) {
+      clean.correctControl = item.correctControl.trim().slice(0, 320);
+    }
+    sanitized.push(clean);
   }
   return sanitized;
 }
@@ -618,10 +640,25 @@ export function createStateStore(storage = safeGetLocalStorage()) {
       const sanitizedDecisions = Array.isArray(attemptRecord.decisions)
         ? attemptRecord.decisions
           .filter((d) => isPlainObject(d) && OBJECTIVE_SET.has(d.objectiveId))
-          .map((d) => ({
-            objectiveId: d.objectiveId,
-            isCorrect: Boolean(d.isCorrect)
-          }))
+          .map((d) => {
+            const clean = {
+              objectiveId: d.objectiveId,
+              isCorrect: Boolean(d.isCorrect)
+            };
+            if (typeof d.challengeId === 'string' && d.challengeId.trim()) {
+              clean.challengeId = d.challengeId.trim().slice(0, 64);
+            }
+            if (typeof d.title === 'string' && d.title.trim()) {
+              clean.title = d.title.trim().slice(0, 160);
+            }
+            if (typeof d.glossaryTermId === 'string' && d.glossaryTermId.trim()) {
+              clean.glossaryTermId = d.glossaryTermId.trim().slice(0, 64);
+            }
+            if (typeof d.correctControl === 'string' && d.correctControl.trim()) {
+              clean.correctControl = d.correctControl.trim().slice(0, 320);
+            }
+            return clean;
+          })
         : [];
 
       currentEntry.bestBaseScore = Math.max(currentEntry.bestBaseScore, baseScore);

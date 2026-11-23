@@ -53,6 +53,7 @@ export function mount(container, levelData, callbacks = {}) {
     scorableDecisionsCount: 0,
     timeline: [],
     completedPhases: new Set(),
+    lastConsequence: null,
     locked: false
   };
   activeSession = session;
@@ -118,6 +119,9 @@ export function mount(container, levelData, callbacks = {}) {
         createEl(doc, 'span', 'timeline-entry-phase', `${entry.phase} · ${statusLabel}`),
         createEl(doc, 'span', 'timeline-entry-decision', entry.label)
       );
+      if (entry.consequenceNote) {
+        li.appendChild(createEl(doc, 'span', 'text-muted', entry.consequenceNote));
+      }
       list.appendChild(li);
     }
 
@@ -153,7 +157,14 @@ export function mount(container, levelData, callbacks = {}) {
     const title = createEl(doc, 'h2', '', node.title);
     title.id = `incident-title-${node.id}`;
     const scenario = createEl(doc, 'p', '', node.scenario);
-    card.append(phaseBadge, title, scenario);
+    card.append(phaseBadge, title);
+
+    if (session.lastConsequence && !node.isTerminal) {
+      const consequenceBox = createEl(doc, 'div', 'alert alert--warning', session.lastConsequence);
+      card.appendChild(consequenceBox);
+    }
+
+    card.appendChild(scenario);
 
     if (node.isTerminal) {
       const outcomeNote = createEl(
@@ -201,14 +212,25 @@ export function mount(container, levelData, callbacks = {}) {
           session.scorableDecisionsCount += 1;
         }
 
+        const nextNode = nodes[option.nextNodeId];
+        let consequenceNote = '';
+        if (!isCorrect && nextNode && !nextNode.isTerminal) {
+          if (option.nextNodeId === 'n4-eva-rev') {
+            consequenceNote = `Consecuencia de tu decisión en ${node.phase}: se activó una verificación urgente de revocación de credenciales activas.`;
+          } else if (option.nextNodeId === 'n4-cie-fix') {
+            consequenceNote = `Consecuencia de tu decisión en ${node.phase}: auditoría solicitó corregir el cierre antes de archivar el incidente.`;
+          }
+        }
+        session.lastConsequence = consequenceNote || null;
+
         session.timeline.push({
           phase: node.phase,
           label: option.label,
           isCorrect,
-          exposureDelta: option.exposureDelta ?? 0
+          exposureDelta: option.exposureDelta ?? 0,
+          consequenceNote
         });
 
-        const nextNode = nodes[option.nextNodeId];
         if (!nextNode || nextNode.phase !== node.phase) {
           session.completedPhases.add(node.phase);
         }
@@ -232,6 +254,7 @@ export function mount(container, levelData, callbacks = {}) {
           callbacks.onDecision(
             {
               challengeId: node.id,
+              title: `${node.phase}: ${node.title}`,
               objectiveId: option.objectiveId,
               selectedOptionId: option.id,
               isCorrect,

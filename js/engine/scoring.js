@@ -22,6 +22,14 @@ export function calculateMaxBaseLevel(numDecisions) {
   return 100 * n + 50 * Math.floor(n / 3);
 }
 
+export function normalizeLevelMaxBase(scorableDecisionsCount, standardDecisionsCount = null) {
+  const effectiveDecisions =
+    isValidFiniteNumber(standardDecisionsCount) && standardDecisionsCount > 0
+      ? standardDecisionsCount
+      : scorableDecisionsCount;
+  return calculateMaxBaseLevel(effectiveDecisions);
+}
+
 export function calculateTimeBonus(elapsedMs, timerEnabled, maxBonus = 30) {
   if (!timerEnabled) {
     return 0;
@@ -57,7 +65,11 @@ export function applyDecision(
     penaltyOnWrongAnswer = 15,
     objectiveId,
     timerEnabled = false,
-    elapsedMs = null
+    elapsedMs = null,
+    challengeId,
+    title,
+    glossaryTermId,
+    correctControl
   } = {}
 ) {
   const baseAttempt = attempt && typeof attempt === 'object'
@@ -65,10 +77,17 @@ export function applyDecision(
     : createInitialAttempt(null);
 
   const existingDecisions = Array.isArray(baseAttempt.decisions)
-    ? baseAttempt.decisions.map((item) => ({
-      objectiveId: item?.objectiveId,
-      isCorrect: Boolean(item?.isCorrect)
-    }))
+    ? baseAttempt.decisions.map((item) => {
+      const copy = {
+        objectiveId: item?.objectiveId,
+        isCorrect: Boolean(item?.isCorrect)
+      };
+      if (typeof item?.challengeId === 'string' && item.challengeId) copy.challengeId = item.challengeId;
+      if (typeof item?.title === 'string' && item.title) copy.title = item.title;
+      if (typeof item?.glossaryTermId === 'string' && item.glossaryTermId) copy.glossaryTermId = item.glossaryTermId;
+      if (typeof item?.correctControl === 'string' && item.correctControl) copy.correctControl = item.correctControl;
+      return copy;
+    })
     : [];
 
   const currentBaseScore = isValidFiniteNumber(baseAttempt.baseScore) && baseAttempt.baseScore >= 0
@@ -122,6 +141,23 @@ export function applyDecision(
   const failed = newExposure >= 100;
   const newVisibleScore = newBaseScore + newTimeBonus;
 
+  const nextDecision = {
+    objectiveId,
+    isCorrect: correct
+  };
+  if (typeof challengeId === 'string' && challengeId.trim()) {
+    nextDecision.challengeId = challengeId.trim();
+  }
+  if (typeof title === 'string' && title.trim()) {
+    nextDecision.title = title.trim();
+  }
+  if (typeof glossaryTermId === 'string' && glossaryTermId.trim()) {
+    nextDecision.glossaryTermId = glossaryTermId.trim();
+  }
+  if (typeof correctControl === 'string' && correctControl.trim()) {
+    nextDecision.correctControl = correctControl.trim();
+  }
+
   return {
     ...baseAttempt,
     baseScore: newBaseScore,
@@ -132,10 +168,7 @@ export function applyDecision(
     failed,
     decisions: [
       ...existingDecisions,
-      {
-        objectiveId,
-        isCorrect: correct
-      }
+      nextDecision
     ]
   };
 }

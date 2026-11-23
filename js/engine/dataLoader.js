@@ -573,12 +573,19 @@ export function createDataLoader({ basePath = './data', fetchImpl = globalThis.f
       );
     }
 
-    const init = signal ? { signal } : undefined;
+    const init = {};
+    if (signal) {
+      init.signal = signal;
+    }
+    if (fetchImpl === globalThis.fetch) {
+      init.cache = 'no-cache';
+    }
+    const fetchInit = Object.keys(init).length > 0 ? init : undefined;
     let response;
     try {
       response = fetchImpl === globalThis.fetch
-        ? await globalThis.fetch(url, init)
-        : await fetchImpl(url, init);
+        ? await globalThis.fetch(url, fetchInit)
+        : await fetchImpl(url, fetchInit);
     } catch (err) {
       if (err?.name === 'AbortError') {
         throw err;

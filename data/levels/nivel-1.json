@@ -1,7 +1,9 @@
 {
   "level": 1,
   "title": "El Túnel Abierto",
-  "objectiveIds": ["O1"],
+  "objectiveIds": [
+    "O1"
+  ],
   "challenges": [
     {
       "id": "n1-r1",
@@ -23,12 +25,21 @@
         "payloadPreview": "usuario=analista.demo&clave=ClaveDemo_NoReal_01"
       },
       "options": [
-        { "id": "allow", "label": "Permitir" },
-        { "id": "require_https", "label": "Exigir HTTPS / configuración segura" },
-        { "id": "block", "label": "Bloquear" }
+        {
+          "id": "allow",
+          "label": "Permitir"
+        },
+        {
+          "id": "require_https",
+          "label": "Exigir HTTPS / configuración segura"
+        },
+        {
+          "id": "block",
+          "label": "Bloquear"
+        }
       ],
       "correctOptionId": "require_https",
-      "exposureDelta": 20,
+      "exposureDelta": 35,
       "feedbackByOption": {
         "allow": {
           "attackerView": "Si alguien observa el tráfico en la red local o intermedia, podría leer en texto plano el usuario y la contraseña de demostración sin dejar rastro.",
@@ -69,12 +80,21 @@
         "payloadPreview": "[Carga protegida por TLS 1.3; token ficticio tok_demo_0001]"
       },
       "options": [
-        { "id": "allow", "label": "Permitir" },
-        { "id": "require_https", "label": "Exigir HTTPS / configuración segura" },
-        { "id": "block", "label": "Bloquear" }
+        {
+          "id": "allow",
+          "label": "Permitir"
+        },
+        {
+          "id": "require_https",
+          "label": "Exigir HTTPS / configuración segura"
+        },
+        {
+          "id": "block",
+          "label": "Bloquear"
+        }
       ],
       "correctOptionId": "allow",
-      "exposureDelta": 15,
+      "exposureDelta": 25,
       "feedbackByOption": {
         "allow": {
           "attackerView": "Un observador externo solo vería tráfico cifrado y autenticado hacia api.novapay.example, sin acceso al contenido ni capacidad de alterarlo sin romper la sesión.",
@@ -114,12 +134,21 @@
         "payloadPreview": "[Primera solicitud HTTP susceptible a degradación antes de redirigir]"
       },
       "options": [
-        { "id": "allow", "label": "Permitir" },
-        { "id": "require_https", "label": "Exigir HTTPS / configuración segura" },
-        { "id": "block", "label": "Bloquear" }
+        {
+          "id": "allow",
+          "label": "Permitir"
+        },
+        {
+          "id": "require_https",
+          "label": "Exigir HTTPS / configuración segura"
+        },
+        {
+          "id": "block",
+          "label": "Bloquear"
+        }
       ],
       "correctOptionId": "require_https",
-      "exposureDelta": 20,
+      "exposureDelta": 30,
       "feedbackByOption": {
         "allow": {
           "attackerView": "La ausencia de HSTS no demuestra por sí sola una interceptación en curso, pero un atacante en la red podría aprovechar el salto inicial por HTTP para intentar degradar la conexión.",
@@ -159,12 +188,21 @@
         "payloadPreview": "[Intento de envío de datos de pago hacia pasarela con certificado no confiable]"
       },
       "options": [
-        { "id": "allow", "label": "Permitir" },
-        { "id": "require_https", "label": "Exigir HTTPS / configuración segura" },
-        { "id": "block", "label": "Bloquear" }
+        {
+          "id": "allow",
+          "label": "Permitir"
+        },
+        {
+          "id": "require_https",
+          "label": "Exigir HTTPS / configuración segura"
+        },
+        {
+          "id": "block",
+          "label": "Bloquear"
+        }
       ],
       "correctOptionId": "block",
-      "exposureDelta": 25,
+      "exposureDelta": 35,
       "feedbackByOption": {
         "allow": {
           "attackerView": "Si el cliente acepta certificados expirados o fuera de su cadena de confianza, alguien podría suplantar la pasarela y observar o alterar los datos enviados.",
@@ -204,12 +242,21 @@
         "payloadPreview": "[Script JavaScript activo cargado por HTTP dentro de checkout HTTPS]"
       },
       "options": [
-        { "id": "allow", "label": "Permitir" },
-        { "id": "require_https", "label": "Exigir HTTPS / configuración segura" },
-        { "id": "block", "label": "Bloquear" }
+        {
+          "id": "allow",
+          "label": "Permitir"
+        },
+        {
+          "id": "require_https",
+          "label": "Exigir HTTPS / configuración segura"
+        },
+        {
+          "id": "block",
+          "label": "Bloquear"
+        }
       ],
       "correctOptionId": "block",
-      "exposureDelta": 20,
+      "exposureDelta": 35,
       "feedbackByOption": {
         "allow": {
           "attackerView": "Un actor en posición de interceptar el tráfico HTTP del script podría modificar el código JavaScript y acceder al formulario de pago dentro del checkout HTTPS.",
@@ -249,12 +296,21 @@
         "payloadPreview": "[Sesión negociada únicamente con TLS 1.0 y RC4]"
       },
       "options": [
-        { "id": "allow", "label": "Permitir" },
-        { "id": "require_https", "label": "Exigir HTTPS / configuración segura" },
-        { "id": "block", "label": "Bloquear" }
+        {
+          "id": "allow",
+          "label": "Permitir"
+        },
+        {
+          "id": "require_https",
+          "label": "Exigir HTTPS / configuración segura"
+        },
+        {
+          "id": "block",
+          "label": "Bloquear"
+        }
       ],
       "correctOptionId": "require_https",
-      "exposureDelta": 20,
+      "exposureDelta": 30,
       "feedbackByOption": {
         "allow": {
           "attackerView": "Las debilidades conocidas en TLS 1.0 y en el algoritmo RC4 podrían facilitar la recuperación parcial de datos sensibles si alguien captura sesiones repetidas.",

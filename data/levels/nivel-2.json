@@ -1,7 +1,11 @@
 {
   "level": 2,
   "title": "La Bóveda de Texto Plano",
-  "objectiveIds": ["O2", "O3", "O5"],
+  "objectiveIds": [
+    "O2",
+    "O3",
+    "O5"
+  ],
   "buckets": [
     {
       "id": "hash_password",
@@ -33,7 +37,7 @@
       "scenario": "La tabla de usuarios antiguos de NovaPay guarda resúmenes MD5 sin salt por cada contraseña.",
       "recordLabel": "clave_md5_sin_salt: \"md5_ejemplo_sin_salt_00a1b2c3\"",
       "correctOptionId": "hash_password",
-      "exposureDelta": 15,
+      "exposureDelta": 25,
       "feedbackByOption": {
         "hash_password": {
           "attackerView": "Si se filtra la base de datos, un atacante podría probar miles de millones de contraseñas por segundo o usar tablas precalculadas al faltar salt.",
@@ -67,7 +71,7 @@
       "scenario": "Un módulo heredado calcula SHA-1 de una sola pasada sobre las contraseñas del portal de comercios.",
       "recordLabel": "clave_sha1_rapido: \"sha1_ejemplo_rapido_00d4e5f6\"",
       "correctOptionId": "hash_password",
-      "exposureDelta": 15,
+      "exposureDelta": 25,
       "feedbackByOption": {
         "hash_password": {
           "attackerView": "Ante una filtración de la tabla, hardware moderno podría ejecutar búsquedas por diccionario a altísima velocidad contra resúmenes SHA-1 rápidos.",
@@ -101,7 +105,7 @@
       "scenario": "NovaPay debe emitir comprobantes fiscales mensuales y necesita recuperar el identificador tributario de cada comercio registrado.",
       "recordLabel": "id_fiscal_cliente: \"NIF-DEMO-000123 (necesario para factura)\"",
       "correctOptionId": "authenticated_encryption",
-      "exposureDelta": 15,
+      "exposureDelta": 25,
       "feedbackByOption": {
         "hash_password": {
           "attackerView": "Aunque un hash protegería el secreto si hubiera copia, la función unidireccional impediría recuperar el dato fiscal para facturar.",
@@ -136,7 +140,7 @@
       "recordLabel": "saldo_aes_ecb: \"[BLOQUE_01][BLOQUE_01][BLOQUE_02] (bloques repetidos)\"",
       "visualAsset": "assets/ecb-pattern.svg",
       "correctOptionId": "authenticated_encryption",
-      "exposureDelta": 20,
+      "exposureDelta": 30,
       "feedbackByOption": {
         "hash_password": {
           "attackerView": "Usar un hash impediría conocer el saldo real en operaciones legítimas, además de no ofrecer autenticación de integridad del registro.",
@@ -170,7 +174,7 @@
       "scenario": "Un servicio de archivos cifra documentos usando AES-GCM con una clave compartida y un contador de nonce reiniciado a cero en cada arranque.",
       "recordLabel": "registro_gcm_reuso: \"nonce_fijo_00000001 (reutilizado bajo misma clave)\"",
       "correctOptionId": "authenticated_encryption",
-      "exposureDelta": 20,
+      "exposureDelta": 30,
       "feedbackByOption": {
         "hash_password": {
           "attackerView": "Convertir documentos cifrados en hashes destruye la capacidad de recuperarlos y no corrige la gestión del esquema AEAD.",
@@ -204,7 +208,7 @@
       "scenario": "La aplicación de suscripciones almacena el número completo de tarjeta (PAN) en una tabla operativa consultada por varios microservicios de facturación.",
       "recordLabel": "pan_recurrente_demo: \"4000-00XX-XXXX-0000 (PAN ficticio)\"",
       "correctOptionId": "tokenize_minimize",
-      "exposureDelta": 15,
+      "exposureDelta": 25,
       "feedbackByOption": {
         "hash_password": {
           "attackerView": "Un hash simple sobre un PAN de formato acotado podría revertirse por búsqueda exhaustiva y además impediría procesar cobros si no hay token o bóveda.",
@@ -238,7 +242,7 @@
       "scenario": "Tras aprobar la transacción con la red de pagos, el módulo de checkout persiste el código de verificación de tarjeta (CVV) cifrado para supuestos reintentos.",
       "recordLabel": "cvv_post_autorizacion: \"XXX (conservado tras aprobar cobro)\"",
       "correctOptionId": "delete_do_not_store",
-      "exposureDelta": 25,
+      "exposureDelta": 35,
       "feedbackByOption": {
         "hash_password": {
           "attackerView": "Conservar el CVV en cualquier forma tras autorizar viola la norma y un código de 3 o 4 dígitos puede adivinarse fácilmente si se expone su resumen.",
@@ -272,7 +276,7 @@
       "scenario": "Una tabla analítica conserva coordenadas GPS precisas de clientes desde hace seis años aunque el servicio ya no utiliza geolocalización.",
       "recordLabel": "gps_historico_demo: \"[coordenadas antiguas sin uso actual]\"",
       "correctOptionId": "delete_do_not_store",
-      "exposureDelta": 15,
+      "exposureDelta": 25,
       "feedbackByOption": {
         "hash_password": {
           "attackerView": "Aplicar hash a datos obsoletos e innecesarios mantiene registros correlacionables sin justificación operativa.",

@@ -59,7 +59,7 @@ export function createGuideModal({ container }) {
     const guideItems = [
       'Cuatro mecánicas distintas: 1) Inspector de tráfico en red, 2) Clasificador de datos (con teclado/botones y arrastre opcional), 3) Búsqueda de errores en código simulado no ejecutable y 4) Simulacro de brecha ramificado en 6 fases.',
       'Puntos y rachas: cada acierto otorga +100 puntos base; cada 3 aciertos consecutivos dentro del mismo nivel suman +50 puntos de racha. Si activas el temporizador opcional, añade un bono de 0 a 30 puntos sin afectar tu rango final.',
-      'Barra de exposición (0 a 100 %): cada decisión riesgosa aumenta la exposición según su gravedad. Al llegar a 100 %, el intento falla y puedes reintentar el nivel sin perder niveles ya completados.',
+      'Barra de exposición (0 a 100 %): cada decisión riesgosa suma entre 25 % y 35 % según su gravedad. Con 3 fallos graves o 4 errores la exposición llega a 100 %, detiene el avance y debes reintentar el nivel (sin perder niveles ya completados). Si cierras con 60 % o más verás una recomendación explícita de reintento.',
       'Retroalimentación en 3 bloques: después de cada elección verás qué podría aprovechar un atacante, por qué ocurre el riesgo y cómo prevenirlo, junto al glosario accesible y referencias OWASP.'
     ];
 

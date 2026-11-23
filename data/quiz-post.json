@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "type": "post",
+  "questions": [
+    {
+      "id": "post-q1",
+      "objectiveId": "O3",
+      "prompt": "En una auditoría de código de NovaPay encuentras un módulo que envuelve llaves con RSA sin padding (NoPadding) y una tabla heredada de contraseñas en SHA-1 rápido. ¿Qué evaluación técnica es correcta?",
+      "options": [
+        { "id": "a", "label": "RSA NoPadding, PKCS#1 v1.5 y RSA-OAEP ofrecen exactamente la misma seguridad práctica, y SHA-1 rápido es seguro si incluye un salt." },
+        { "id": "b", "label": "Conviene reemplazar SHA-1 por cifrado AES-ECB para recuperar contraseñas y mantener RSA usando relleno manual con ceros." },
+        { "id": "c", "label": "RSA NoPadding es inseguro y debe pasar a RSA-OAEP (distinto de PKCS#1 v1.5); las contraseñas deben migrar a Argon2id o bcrypt." },
+        { "id": "d", "label": "Mantener RSA NoPadding resulta aceptable con llaves de 2048 bits siempre que las contraseñas usen MD5 con un salt único." }
+      ],
+      "correctOptionId": "c",
+      "explanation": "RSA sin padding es determinista e inseguro; para nuevos diseños debe usarse RSA-OAEP, teniendo en cuenta que PKCS#1 v1.5 y RSA-OAEP son distintos y tampoco equivalen a NoPadding. Para contraseñas, los hashes rápidos como SHA-1 o MD5 deben sustituirse por Argon2id o bcrypt en sistemas heredados.",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html",
+      "glossaryTermId": "rsa-oaep"
+    },
+    {
+      "id": "post-q2",
+      "objectiveId": "O1",
+      "prompt": "Una página de pago HTTPS carga un script externo por http://cdn-externo.example/helper.js, mientras un microservicio interno usa un certificado autofirmado. ¿Qué criterio técnico aplica?",
+      "options": [
+        { "id": "a", "label": "El script HTTP mixto rompe la integridad del checkout y debe bloquearse; el autofirmado depende de su cadena de confianza." },
+        { "id": "b", "label": "Todo certificado autofirmado es automáticamente inseguro en cualquier red, pero el script HTTP en HTTPS no implica riesgo alguno." },
+        { "id": "c", "label": "El navegador cifra automáticamente la descarga del script HTTP externo dentro del checkout HTTPS antes de ejecutar el código." },
+        { "id": "d", "label": "La presencia de HSTS en el checkout permite cargar scripts activos por HTTP sin riesgo de alteración durante el tránsito." }
+      ],
+      "correctOptionId": "a",
+      "explanation": "El contenido mixto activo por HTTP permite que un intermediario altere código ejecutado dentro de la sesión HTTPS, por lo que debe bloquearse y servirse por origen seguro. En cambio, un certificado autofirmado no es automáticamente inseguro en todo contexto: su validez depende de contar con una cadena de confianza verificable para el cliente previsto.",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html",
+      "glossaryTermId": "certificado-digital"
+    },
+    {
+      "id": "post-q3",
+      "objectiveId": "O5",
+      "prompt": "Tras detectar que se filtró una llave maestra usada para cifrar archivos fiscales necesarios para facturación, ¿qué secuencia de acciones corresponde ejecutar?",
+      "options": [
+        { "id": "a", "label": "Borrar de inmediato todos los archivos fiscales obligatorios y cerrar el caso sin documentar para evitar nuevas observaciones." },
+        { "id": "b", "label": "Re-cifrar los registros con la misma llave cambiando únicamente el nombre del contenedor y publicar las muestras originales." },
+        { "id": "c", "label": "Convertir los datos fiscales en hashes MD5 sin salt y conservar el CVV cifrado como respaldo adicional." },
+        { "id": "d", "label": "Revocar y rotar la llave en KMS, re-cifrar con llave nueva en AES-GCM (nonce único), evaluar alcance y emitir informe sanitizado." }
+      ],
+      "correctOptionId": "d",
+      "explanation": "Una llave comprometida nunca debe reutilizarse para re-cifrar datos: requiere revocación, emisión de una llave nueva y re-cifrado autenticado con AES-GCM y nonce único. Además, la respuesta responsable evalúa el impacto real, aplica minimización y comunica conclusiones sin divulgar secretos.",
+      "owaspRef": "https://top10.owasp.org/2025/A04_2025-Cryptographic_Failures/",
+      "glossaryTermId": "aes-gcm"
+    },
+    {
+      "id": "post-q4",
+      "objectiveId": "O2",
+      "prompt": "En el diseño de la base de datos de NovaPay coexisten contraseñas de acceso, identificadores fiscales recuperables para facturar y coordenadas GPS obsoletas de hace cinco años. ¿Cómo debe tratarse cada uno?",
+      "options": [
+        { "id": "a", "label": "Cifrar los tres tipos de dato con AES-GCM usando la misma clave maestra y un contador fijo de nonce para simplificar el esquema." },
+        { "id": "b", "label": "Usar Argon2id con salt único para contraseñas, AES-GCM (nonce único) para datos fiscales y purgar las coordenadas." },
+        { "id": "c", "label": "Aplicar hash Argon2id tanto a las contraseñas como a los identificadores fiscales para evitar gestionar llaves de cifrado." },
+        { "id": "d", "label": "Tokenizar las coordenadas GPS y las contraseñas en la misma tabla, dejando los identificadores fiscales en texto plano." }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Cada categoría responde a un objetivo distinto: las contraseñas usan hashing lento unidireccional (Argon2id), los datos recuperables legítimos usan cifrado autenticado (AES-GCM con nonce único) y la información sin propósito operativo vigente debe eliminarse por minimización.",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html",
+      "glossaryTermId": "minimizacion-datos"
+    },
+    {
+      "id": "post-q5",
+      "objectiveId": "O4",
+      "prompt": "El equipo propone retirar una clave de API incrustada en el código colocándola en un archivo .env en el servidor y manteniendo la misma clave. ¿Por qué es insuficiente esta medida?",
+      "options": [
+        { "id": "a", "label": "Una variable de entorno o .env no equivale a un gestor seguro de secretos y la clave previa debe rotarse tras exponerse." },
+        { "id": "b", "label": "El servidor no puede leer variables de entorno en tiempo de ejecución sin envolver primero los valores con cifrado AES-ECB." },
+        { "id": "c", "label": "Los archivos .env solo funcionan correctamente si además se suben al repositorio público con permiso de solo lectura." },
+        { "id": "d", "label": "Cualquier variable de entorno reemplaza por completo la necesidad de certificados TLS vigentes y control de acceso en red." }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Sacar un secreto del código fuente hacia una variable de entorno simple no proporciona rotación, cifrado dedicado, separación de custodia ni auditoría de accesos como un gestor seguro de secretos. Además, todo secreto previamente escrito en código debe considerarse expuesto y rotarse.",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html",
+      "glossaryTermId": "gestion-secretos"
+    }
+  ]
+}

@@ -1,0 +1,279 @@
+{
+  "level": 1,
+  "title": "El Túnel Abierto",
+  "objectiveIds": ["O1"],
+  "challenges": [
+    {
+      "id": "n1-r1",
+      "objectiveId": "O1",
+      "type": "network-inspector",
+      "title": "Inicio de sesión por HTTP sin cifrado",
+      "scenario": "El portal interno de analistas de NovaPay envía credenciales de acceso mediante HTTP sin cifrado de transporte.",
+      "requestDetails": {
+        "method": "POST",
+        "url": "http://portal.novapay.example/login",
+        "protocol": "HTTP/1.1",
+        "tlsVersion": "Ninguna (texto plano)",
+        "certificateStatus": "No aplica (sin TLS)",
+        "headers": {
+          "Host": "portal.novapay.example",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Origin": "http://portal.novapay.example"
+        },
+        "payloadPreview": "usuario=analista.demo&clave=ClaveDemo_NoReal_01"
+      },
+      "options": [
+        { "id": "allow", "label": "Permitir" },
+        { "id": "require_https", "label": "Exigir HTTPS / configuración segura" },
+        { "id": "block", "label": "Bloquear" }
+      ],
+      "correctOptionId": "require_https",
+      "exposureDelta": 20,
+      "feedbackByOption": {
+        "allow": {
+          "attackerView": "Si alguien observa el tráfico en la red local o intermedia, podría leer en texto plano el usuario y la contraseña de demostración sin dejar rastro.",
+          "why": "Permitir un inicio de sesión por HTTP transmite credenciales sin cifrado ni integridad, exponiéndolas ante cualquier escucha pasiva o alteración en tránsito.",
+          "correctControl": "Exigir HTTPS con TLS vigente antes de enviar formularios de autenticación y deshabilitar el acceso por HTTP plano."
+        },
+        "require_https": {
+          "attackerView": "Sin TLS en el túnel, cualquier actor en la ruta de red podría capturar las credenciales transmitidas en texto plano.",
+          "why": "Elegiste exigir HTTPS: el protocolo HTTP no cifra ni autentica el canal, por lo que nunca debe transportar credenciales.",
+          "correctControl": "Migrar el formulario y el endpoint de inicio de sesión a HTTPS con TLS 1.2/1.3 y redirigir o rechazar envíos sin cifrar."
+        },
+        "block": {
+          "attackerView": "Mientras el endpoint siga aceptando autenticación por HTTP, un observador en la ruta podría interceptar futuras credenciales enviadas antes de un bloqueo puntual.",
+          "why": "Bloquear la petición concreta frena el envío actual, pero el flujo legítimo de acceso necesita habilitar HTTPS y configuración segura en lugar de quedar inaccesible.",
+          "correctControl": "Configurar y exigir HTTPS con TLS válido en el portal para proteger la confidencialidad e integridad de cada inicio de sesión."
+        }
+      },
+      "glossaryTermId": "texto-plano",
+      "owaspRef": "https://top10.owasp.org/2025/A04_2025-Cryptographic_Failures/"
+    },
+    {
+      "id": "n1-r2",
+      "objectiveId": "O1",
+      "type": "network-inspector",
+      "title": "API de pagos con TLS 1.3 y certificado válido",
+      "scenario": "El servicio principal de cobros de NovaPay recibe una solicitud sobre TLS 1.3, con certificado emitido por una autoridad confiable y cabecera HSTS activa.",
+      "requestDetails": {
+        "method": "POST",
+        "url": "https://api.novapay.example/v1/pagos",
+        "protocol": "HTTP/2",
+        "tlsVersion": "TLS 1.3 (TLS_AES_256_GCM_SHA384)",
+        "certificateStatus": "Válido (AC confiable, CN=api.novapay.example)",
+        "headers": {
+          "Host": "api.novapay.example",
+          "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+          "Cache-Control": "no-store"
+        },
+        "payloadPreview": "[Carga protegida por TLS 1.3; token ficticio tok_demo_0001]"
+      },
+      "options": [
+        { "id": "allow", "label": "Permitir" },
+        { "id": "require_https", "label": "Exigir HTTPS / configuración segura" },
+        { "id": "block", "label": "Bloquear" }
+      ],
+      "correctOptionId": "allow",
+      "exposureDelta": 15,
+      "feedbackByOption": {
+        "allow": {
+          "attackerView": "Un observador externo solo vería tráfico cifrado y autenticado hacia api.novapay.example, sin acceso al contenido ni capacidad de alterarlo sin romper la sesión.",
+          "why": "TLS 1.3 con cifrado AEAD, certificado válido para el dominio y cabeceras HSTS y no-store cumplen los controles de transporte esperados.",
+          "correctControl": "Permitir la operación bajo estas condiciones y mantener el monitoreo periódico de vigencia del certificado y suites habilitadas."
+        },
+        "require_https": {
+          "attackerView": "La solicitud ya transita cifrada sobre TLS 1.3 hacia un certificado confiable, por lo que no existe exposición en el canal de red.",
+          "why": "Solicitar migración a HTTPS en una conexión que ya emplea HTTP/2, TLS 1.3 y HSTS genera fricción innecesaria al no existir falla de transporte en los datos presentados.",
+          "correctControl": "Permitir solicitudes que cumplan con TLS 1.2/1.3 moderno, certificado confiable y cabeceras de seguridad activas."
+        },
+        "block": {
+          "attackerView": "Aunque el canal está protegido frente a interceptación, bloquear un tráfico legítimo bien configurado interrumpe operaciones válidas sin evidencia de riesgo.",
+          "why": "El endpoint utiliza TLS 1.3, certificado vigente con cadena válida y HSTS configurado; no hay indicios de degradación ni de certificado dudoso.",
+          "correctControl": "Permitir la comunicación cuando la cadena de confianza, la versión TLS y las cabeceras de transporte sean correctas."
+        }
+      },
+      "glossaryTermId": "tls",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html"
+    },
+    {
+      "id": "n1-r3",
+      "objectiveId": "O1",
+      "type": "network-inspector",
+      "title": "Visita inicial HTTP sin HSTS ni precarga",
+      "scenario": "Una primera petición de navegación llega por HTTP sin cabecera Strict-Transport-Security ni registro en listas de precarga HSTS.",
+      "requestDetails": {
+        "method": "GET",
+        "url": "http://novapay.example/acceso",
+        "protocol": "HTTP/1.1",
+        "tlsVersion": "Ninguna en el salto inicial (sin HSTS ni preload)",
+        "certificateStatus": "No aplica en salto inicial",
+        "headers": {
+          "Host": "novapay.example",
+          "Strict-Transport-Security": "(ausente)"
+        },
+        "payloadPreview": "[Primera solicitud HTTP susceptible a degradación antes de redirigir]"
+      },
+      "options": [
+        { "id": "allow", "label": "Permitir" },
+        { "id": "require_https", "label": "Exigir HTTPS / configuración segura" },
+        { "id": "block", "label": "Bloquear" }
+      ],
+      "correctOptionId": "require_https",
+      "exposureDelta": 20,
+      "feedbackByOption": {
+        "allow": {
+          "attackerView": "La ausencia de HSTS no demuestra por sí sola una interceptación en curso, pero un atacante en la red podría aprovechar el salto inicial por HTTP para intentar degradar la conexión.",
+          "why": "Sin redirección estricta ni HSTS, el navegador inicia sin cifrado; HSTS protege visitas posteriores y solo la precarga (preload) protege la primera visita.",
+          "correctControl": "Exigir HTTPS desde el inicio, configurar redirección 301/308 hacia HTTPS, emitir HSTS y evaluar preload si todo el dominio opera bajo HTTPS."
+        },
+        "require_https": {
+          "attackerView": "Faltar HSTS no prueba que exista interceptación activa, aunque deja una ventana de riesgo de degradación en la primera petición HTTP.",
+          "why": "Exigir HTTPS y endurecer la configuración es correcto: HSTS mitiga la degradación en visitas posteriores, mientras que HSTS preload extiende esa protección a la primera visita.",
+          "correctControl": "Forzar redirección a HTTPS, enviar Strict-Transport-Security en respuestas HTTPS y valorar la inclusión en preload tras validar subdominios."
+        },
+        "block": {
+          "attackerView": "Aunque la falta de HSTS no demuestra un ataque consumado, dejar el salto inicial en HTTP abre la posibilidad de manipulación antes de la redirección.",
+          "why": "Bloquear de forma permanente el acceso impide redirigir a usuarios que escriben el dominio sin esquema; lo adecuado es exigir la migración y redirección segura a HTTPS.",
+          "correctControl": "Responder con redirección hacia HTTPS, habilitar HSTS para visitas posteriores y considerar preload para cubrir el primer contacto."
+        }
+      },
+      "glossaryTermId": "hsts",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html"
+    },
+    {
+      "id": "n1-r4",
+      "objectiveId": "O1",
+      "type": "network-inspector",
+      "title": "Certificado vencido sin cadena de confianza en pasarela",
+      "scenario": "Una petición hacia la pasarela de autorización presenta un certificado expirado hace 42 días y autofirmado sin estar instalado en el almacén de confianza del cliente.",
+      "requestDetails": {
+        "method": "POST",
+        "url": "https://pasarela.novapay.example/autorizar",
+        "protocol": "HTTP/2",
+        "tlsVersion": "TLS 1.2",
+        "certificateStatus": "Vencido (expiró hace 42 días) y autofirmado sin cadena de confianza en el cliente",
+        "headers": {
+          "Host": "pasarela.novapay.example",
+          "Content-Type": "application/json"
+        },
+        "payloadPreview": "[Intento de envío de datos de pago hacia pasarela con certificado no confiable]"
+      },
+      "options": [
+        { "id": "allow", "label": "Permitir" },
+        { "id": "require_https", "label": "Exigir HTTPS / configuración segura" },
+        { "id": "block", "label": "Bloquear" }
+      ],
+      "correctOptionId": "block",
+      "exposureDelta": 25,
+      "feedbackByOption": {
+        "allow": {
+          "attackerView": "Si el cliente acepta certificados expirados o fuera de su cadena de confianza, alguien podría suplantar la pasarela y observar o alterar los datos enviados.",
+          "why": "Un certificado autofirmado no es automáticamente inseguro en todo contexto (depende de la cadena de confianza del cliente), pero aquí está vencido y carece de confianza verificable.",
+          "correctControl": "Bloquear la conexión inmediatamente y no omitir errores de validación hasta reemplazar el certificado por uno vigente y confiable."
+        },
+        "require_https": {
+          "attackerView": "La conexión ya usa el esquema HTTPS, pero al no validar identidad ni vigencia un intermediario podría hacerse pasar por la pasarela.",
+          "why": "Pedir HTTPS no basta cuando la autenticación del servidor falló: un certificado autofirmado solo es válido si su cadena de confianza está gestionada en el entorno cliente, y además este expiró.",
+          "correctControl": "Bloquear el envío de inmediato hasta emitir y desplegar un certificado vigente validado por una cadena de confianza apropiada."
+        },
+        "block": {
+          "attackerView": "Sin validación estricta de identidad y vigencia, un tercero podría presentar otro certificado arbitrario para interceptar la sesión.",
+          "why": "Bloquear es la medida segura: aunque un certificado autofirmado puede ser válido en entornos cerrados con cadena de confianza controlada, este expiró hace 42 días y no es confiable.",
+          "correctControl": "Rechazar la conexión, mantener estricta la verificación de certificados en el cliente y renovar mediante una autoridad confiable."
+        }
+      },
+      "glossaryTermId": "certificado-digital",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html"
+    },
+    {
+      "id": "n1-r5",
+      "objectiveId": "O1",
+      "type": "network-inspector",
+      "title": "Checkout HTTPS con script activo cargado por HTTP",
+      "scenario": "La página de pago de NovaPay carga por HTTPS, pero intenta descargar un archivo JavaScript activo desde un origen HTTP sin cifrar.",
+      "requestDetails": {
+        "method": "GET",
+        "url": "http://cdn-externo.example/checkout-helper.js",
+        "protocol": "HTTP/1.1",
+        "tlsVersion": "Ninguna (contenido mixto activo)",
+        "certificateStatus": "No aplica (sin TLS)",
+        "headers": {
+          "Host": "cdn-externo.example",
+          "Referer": "https://tienda.novapay.example/checkout"
+        },
+        "payloadPreview": "[Script JavaScript activo cargado por HTTP dentro de checkout HTTPS]"
+      },
+      "options": [
+        { "id": "allow", "label": "Permitir" },
+        { "id": "require_https", "label": "Exigir HTTPS / configuración segura" },
+        { "id": "block", "label": "Bloquear" }
+      ],
+      "correctOptionId": "block",
+      "exposureDelta": 20,
+      "feedbackByOption": {
+        "allow": {
+          "attackerView": "Un actor en posición de interceptar el tráfico HTTP del script podría modificar el código JavaScript y acceder al formulario de pago dentro del checkout HTTPS.",
+          "why": "El contenido mixto activo rompe las garantías de confidencialidad e integridad de la página HTTPS porque el navegador ejecutaría código sin autenticar.",
+          "correctControl": "Bloquear el script cargado por HTTP, migrar la referencia a HTTPS confiable (o alojarlo localmente) y reforzar la política CSP."
+        },
+        "require_https": {
+          "attackerView": "Mientras la etiqueta siga apuntando a un recurso externo por HTTP, un intermediario podría alterar el script antes de que llegue al navegador.",
+          "why": "No basta con exigir HTTPS al checkout si éste sigue cargando código activo externo sin cifrar; la carga insegura debe bloquearse en tiempo de ejecución.",
+          "correctControl": "Bloquear el recurso HTTP mixto de inmediato y servir el script únicamente desde un origen propio o HTTPS verificado con CSP restrictiva."
+        },
+        "block": {
+          "attackerView": "Si este script HTTP llegara a ejecutarse, permitiría a un intermediario inyectar instrucciones dentro de la sesión del checkout HTTPS.",
+          "why": "Bloquear contenido mixto activo impide que código sin integridad ni cifrado comprometa el contexto seguro de la página principal.",
+          "correctControl": "Mantener el bloqueo de contenido mixto, corregir la URL a HTTPS verificable o empaquetar localmente el recurso y aplicar CSP."
+        }
+      },
+      "glossaryTermId": "mitm",
+      "owaspRef": "https://top10.owasp.org/2025/A04_2025-Cryptographic_Failures/"
+    },
+    {
+      "id": "n1-r6",
+      "objectiveId": "O1",
+      "type": "network-inspector",
+      "title": "Endpoint legado con TLS 1.0 y suite RC4",
+      "scenario": "Un servicio interno de conciliación de NovaPay negocia únicamente TLS 1.0 utilizando el cifrado de flujo obsoleto RC4.",
+      "requestDetails": {
+        "method": "POST",
+        "url": "https://legado.novapay.example/conciliacion",
+        "protocol": "HTTP/1.1",
+        "tlsVersion": "TLS 1.0 (TLS_RSA_WITH_RC4_128_SHA)",
+        "certificateStatus": "Vigente en fechas, pero protocolo y cifrado obsoletos",
+        "headers": {
+          "Host": "legado.novapay.example",
+          "Content-Type": "application/json"
+        },
+        "payloadPreview": "[Sesión negociada únicamente con TLS 1.0 y RC4]"
+      },
+      "options": [
+        { "id": "allow", "label": "Permitir" },
+        { "id": "require_https", "label": "Exigir HTTPS / configuración segura" },
+        { "id": "block", "label": "Bloquear" }
+      ],
+      "correctOptionId": "require_https",
+      "exposureDelta": 20,
+      "feedbackByOption": {
+        "allow": {
+          "attackerView": "Las debilidades conocidas en TLS 1.0 y en el algoritmo RC4 podrían facilitar la recuperación parcial de datos sensibles si alguien captura sesiones repetidas.",
+          "why": "Aunque la URL usa HTTPS y el certificado no venció, TLS 1.0 y RC4 están obsoletos y presentan vulnerabilidades criptográficas documentadas.",
+          "correctControl": "Exigir configuración TLS segura: desactivar TLS 1.0/1.1 y RC4, habilitando TLS 1.2/1.3 con suites AEAD modernas."
+        },
+        "require_https": {
+          "attackerView": "Mantener protocolos antiguos y RC4 introduce riesgo de análisis sobre flujos cifrados frente a un observador paciente.",
+          "why": "Usar HTTPS no garantiza seguridad si la versión TLS y la suite criptográfica son débiles; actualizar la configuración elimina protocolos y cifrados obsoletos.",
+          "correctControl": "Deshabilitar TLS 1.0/1.1 y RC4 en el servidor y exigir TLS 1.2 o TLS 1.3 con suites modernas como AES-GCM o ChaCha20-Poly1305."
+        },
+        "block": {
+          "attackerView": "Permitir TLS 1.0 con RC4 dejaría el canal de conciliación expuesto a debilidades criptográficas conocidas.",
+          "why": "Bloquear temporalmente evita usar RC4, pero el objetivo en un endpoint de conciliación interno es remediar la configuración para operar con TLS moderno.",
+          "correctControl": "Exigir configuración HTTPS segura: actualizar el servidor a TLS 1.2/1.3, retirar RC4 y verificar compatibilidad de clientes legítimos."
+        }
+      },
+      "glossaryTermId": "https",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html"
+    }
+  ]
+}

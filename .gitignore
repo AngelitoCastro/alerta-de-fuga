@@ -1,0 +1,10 @@
+# Entorno y secretos (nunca versionar)
+.env
+.env.*
+
+# Archivos temporales y herramientas locales
+.playwright-mcp/
+*.log
+.DS_Store
+Thumbs.db
+node_modules/

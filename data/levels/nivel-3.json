@@ -1,0 +1,268 @@
+{
+  "level": 3,
+  "title": "Llaves bajo el Tapete",
+  "objectiveIds": ["O3", "O4"],
+  "challenges": [
+    {
+      "id": "n3-r1",
+      "objectiveId": "O4",
+      "type": "code-hunt",
+      "title": "Secretos codificados en config/payments.js",
+      "filePath": "config/payments.js",
+      "scenario": "El archivo de configuración del cliente de pagos incluye credenciales ficticias directamente en el código fuente del repositorio.",
+      "lines": [
+        { "lineNumber": 1, "text": "// Archivo ficticio no ejecutable: configuracion de pagos NovaPay" },
+        { "lineNumber": 2, "text": "export const PAYMENT_CONFIG = {" },
+        { "lineNumber": 3, "text": "  endpoint: \"https://api.novapay.example/v1/cobros\"," },
+        { "lineNumber": 4, "text": "  apiKey: \"DEMO_API_KEY_NO_REAL_001\"," },
+        { "lineNumber": 5, "text": "  signingSecret: \"DEMO_SIGNING_SECRET_NO_REAL_002\"," },
+        { "lineNumber": 6, "text": "  timeoutMs: 4000" },
+        { "lineNumber": 7, "text": "};" }
+      ],
+      "vulnerableLineNumbers": [4, 5],
+      "mitigationOptions": [
+        { "id": "env_var_only", "label": "Mover los mismos valores sin cambios a una variable de entorno simple sin control ni auditoría" },
+        { "id": "secret_manager", "label": "Retirar del código, rotar las claves y obtenerlas desde un gestor de secretos" },
+        { "id": "base64_obfuscate", "label": "Codificar apiKey y signingSecret en Base64 dentro del archivo" }
+      ],
+      "correctMitigationId": "secret_manager",
+      "exposureDelta": 20,
+      "feedbackByOutcome": {
+        "correct": {
+          "attackerView": "Cualquier persona o proceso con lectura al repositorio o artefacto empaquetado podría extraer las credenciales ficticias y firmar peticiones no autorizadas.",
+          "why": "Identificaste las líneas con secretos en código y la remediación adecuada: una variable de entorno por sí sola no equivale a un gestor seguro de secretos (carece de rotación, auditoría y custodia aislada).",
+          "correctControl": "Revocar y rotar las credenciales expuestas, retirarlas del repositorio e historial y obtenerlas en tiempo de ejecución desde un gestor de secretos con mínimo privilegio."
+        },
+        "wrongLine": {
+          "attackerView": "Dejar sin marcar las líneas con credenciales embebidas mantiene el riesgo de que cualquiera con acceso al código lea las llaves.",
+          "why": "El endpoint y el tiempo de espera son parámetros operativos públicos; la falla está en las líneas 4 y 5 donde se fijan apiKey y signingSecret en texto claro.",
+          "correctControl": "Localizar exactamente las credenciales codificadas, revocarlas/rotarlas y trasladarlas a un gestor seguro de secretos."
+        },
+        "wrongMitigation": {
+          "attackerView": "Dejar los secretos sin rotar u ocultarlos en Base64 o variables de entorno sin controles permite que quien tuvo acceso previo siga utilizándolos.",
+          "why": "Base64 es codificación reversible, no cifrado; además, una simple variable de entorno no equivale a un gestor de secretos con rotación, cifrado y auditoría de acceso.",
+          "correctControl": "Retirar los valores del código, revocar y rotar ambas credenciales y gestionarlas mediante un servicio dedicado de secretos."
+        }
+      },
+      "glossaryTermId": "gestion-secretos",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"
+    },
+    {
+      "id": "n3-r2",
+      "objectiveId": "O4",
+      "type": "code-hunt",
+      "title": "Archivo .env versionado en el repositorio",
+      "filePath": ".env",
+      "scenario": "Un archivo de entorno con credenciales de base de datos y firma fue incluido en el control de versiones.",
+      "lines": [
+        { "lineNumber": 1, "text": "# Archivo ficticio no ejecutable de ejemplo" },
+        { "lineNumber": 2, "text": "APP_ENV=staging" },
+        { "lineNumber": 3, "text": "PORT=8080" },
+        { "lineNumber": 4, "text": "DB_PASS=CLAVE_BD_FICTICIA_NOVAPAY_01" },
+        { "lineNumber": 5, "text": "JWT_SIGNING_KEY=CLAVE_FIRMA_FICTICIA_NOVAPAY_02" },
+        { "lineNumber": 6, "text": "LOG_LEVEL=info" }
+      ],
+      "vulnerableLineNumbers": [4, 5],
+      "mitigationOptions": [
+        { "id": "gitignore_only", "label": "Añadir .env a .gitignore manteniendo intactas las mismas credenciales ya emitidas en producción" },
+        { "id": "rename_vars", "label": "Renombrar DB_PASS y JWT_SIGNING_KEY por nombres genéricos" },
+        { "id": "revoke_purge_ignore", "label": "Revocar y rotar credenciales, depurar historial y usar gestor de secretos más .gitignore" }
+      ],
+      "correctMitigationId": "revoke_purge_ignore",
+      "exposureDelta": 25,
+      "feedbackByOutcome": {
+        "correct": {
+          "attackerView": "Quien consulte el historial de confirmaciones del repositorio podría recuperar DB_PASS y JWT_SIGNING_KEY aunque el archivo se borre en el último commit.",
+          "why": "Acertaste las líneas sensibles y el control integral: añadir .gitignore no invalida secretos ya expuestos, y un archivo .env no reemplaza un gestor de secretos.",
+          "correctControl": "Revocar y rotar credenciales de inmediato, limpiar la exposición del historial, proteger .env con .gitignore y migrar secretos a un gestor dedicado."
+        },
+        "wrongLine": {
+          "attackerView": "Ignorar las líneas de contraseña y llave de firma mantiene credenciales comprometidas visibles en el control de versiones.",
+          "why": "APP_ENV, PORT y LOG_LEVEL no son secretos; la exposición crítica reside en DB_PASS (línea 4) y JWT_SIGNING_KEY (línea 5).",
+          "correctControl": "Señalar las líneas con credenciales reales o de firma, rotarlas, purgar el historial y trasladar su custodia a un gestor de secretos."
+        },
+        "wrongMitigation": {
+          "attackerView": "Solo agregar .gitignore o renombrar variables deja las credenciales anteriores válidas en el historial de Git para quien las haya copiado.",
+          "why": "Una variable de entorno o archivo .env sin rotación ni auditoría no constituye un gestor seguro de secretos, y .gitignore no borra commits pasados.",
+          "correctControl": "Invalidar y rotar inmediatamente ambos secretos, limpiar el historial y adoptar un gestor de secretos con control de acceso."
+        }
+      },
+      "glossaryTermId": "gestion-secretos",
+      "owaspRef": "https://top10.owasp.org/2025/A04_2025-Cryptographic_Failures/"
+    },
+    {
+      "id": "n3-r3",
+      "objectiveId": "O4",
+      "type": "code-hunt",
+      "title": "Clave maestra almacenada junto al respaldo",
+      "filePath": "backup/storage.yml",
+      "scenario": "La configuración de respaldos nocturnos guarda la llave maestra en el mismo bucket y carpeta que los archivos cifrados.",
+      "lines": [
+        { "lineNumber": 1, "text": "# Archivo ficticio no ejecutable: politica de respaldos" },
+        { "lineNumber": 2, "text": "backup:" },
+        { "lineNumber": 3, "text": "  cipher: \"AES-256-GCM\"" },
+        { "lineNumber": 4, "text": "  destination: \"s3://novapay-respaldos.example/nocturno/\"" },
+        { "lineNumber": 5, "text": "  key_location: \"s3://novapay-respaldos.example/nocturno/master.key\"" },
+        { "lineNumber": 6, "text": "  master_key_inline: \"LLAVE_RESPALDO_FICTICIA_003\"" }
+      ],
+      "vulnerableLineNumbers": [5, 6],
+      "mitigationOptions": [
+        { "id": "kms_separation", "label": "Separar la custodia en KMS/HSM con mínimo privilegio, quitar la clave inline y rotar la llave" },
+        { "id": "zip_password", "label": "Comprimir los respaldos en un archivo ZIP con la misma frase escrita en el archivo YAML" },
+        { "id": "readonly_flag", "label": "Dejar master.key en el mismo directorio del bucket aplicando permiso de solo lectura" }
+      ],
+      "correctMitigationId": "kms_separation",
+      "exposureDelta": 20,
+      "feedbackByOutcome": {
+        "correct": {
+          "attackerView": "Si alguien compromete el repositorio de respaldos, obtendría al mismo tiempo los datos cifrados y la llave necesaria para descifrarlos.",
+          "why": "Separar datos cifrados y llaves evita que un único punto de acceso anule el cifrado AES-256-GCM.",
+          "correctControl": "Custodiar la llave maestra en un KMS o HSM separado con políticas de mínimo privilegio, retirar la clave inline y rotar los respaldos."
+        },
+        "wrongLine": {
+          "attackerView": "No detectar la co-ubicación de la llave maestra permite que el acceso al bucket equivalga a acceso en texto plano a los respaldos.",
+          "why": "El algoritmo AES-256-GCM y el bucket destino son correctos como parámetros; la falla está en las líneas 5 y 6 al ubicar y escribir la clave maestra junto al respaldo.",
+          "correctControl": "Marcar la ruta compartida de clave y la llave inline, separar la gestión mediante KMS/HSM y rotar la llave expuesta."
+        },
+        "wrongMitigation": {
+          "attackerView": "Guardar una contraseña en el mismo YAML o poner solo lectura al archivo master.key no impide leerlo si se accede al almacenamiento.",
+          "why": "El cifrado en reposo pierde sentido cuando el secreto de descifrado reside junto a los datos o en archivos de configuración versionados.",
+          "correctControl": "Separar físicamente y lógicamente las llaves en un KMS/HSM con registro de auditoría y rotación periódica."
+        }
+      },
+      "glossaryTermId": "gestion-secretos",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"
+    },
+    {
+      "id": "n3-r4",
+      "objectiveId": "O4",
+      "type": "code-hunt",
+      "title": "Certificado cercano a vencer sin renovación automática",
+      "filePath": "infra/tls.conf",
+      "scenario": "La configuración TLS de producción muestra un certificado próximo a caducar sin renovación automática ni alertas configuradas.",
+      "lines": [
+        { "lineNumber": 1, "text": "# Archivo ficticio no ejecutable: configuracion TLS" },
+        { "lineNumber": 2, "text": "server_name = \"pagos.novapay.example\"" },
+        { "lineNumber": 3, "text": "tls_min_version = \"TLSv1.2\"" },
+        { "lineNumber": 4, "text": "cert_subject = \"CN=pagos.novapay.example\"" },
+        { "lineNumber": 5, "text": "cert_expires_in_days = 2" },
+        { "lineNumber": 6, "text": "auto_renew = false" },
+        { "lineNumber": 7, "text": "expiry_monitoring = false" }
+      ],
+      "vulnerableLineNumbers": [5, 6, 7],
+      "mitigationOptions": [
+        { "id": "disable_client_check", "label": "Desactivar la verificación de vigencia del certificado en todos los clientes de NovaPay" },
+        { "id": "automate_monitor", "label": "Renovar el certificado a tiempo y activar renovación automática más alertas" },
+        { "id": "long_self_signed", "label": "Generar un certificado autofirmado a 30 años sin cadena de confianza pública ni alertas" }
+      ],
+      "correctMitigationId": "automate_monitor",
+      "exposureDelta": 15,
+      "feedbackByOutcome": {
+        "correct": {
+          "attackerView": "Al caducar en 2 días, las caídas o advertencias de confianza pueden inducir a operadores o clientes a omitir validaciones TLS manualmente.",
+          "why": "La gestión del ciclo de vida de certificados requiere renovación automatizada y alertas previas para evitar interrupciones y malas prácticas de emergencia.",
+          "correctControl": "Habilitar renovación automática (p. ej. ACME) con alertas de vencimiento y renovar el certificado actual antes de expirar."
+        },
+        "wrongLine": {
+          "attackerView": "Ignorar el vencimiento inminente sin renovación ni monitoreo provocará fallas de confianza en el servicio en menos de 48 horas.",
+          "why": "El nombre de dominio y la versión mínima TLS 1.2 son correctos; las líneas críticas son la 5, 6 y 7 que combinan caducidad próxima con ausencia de renovación y monitoreo.",
+          "correctControl": "Identificar las directivas de expiración y automatización desactivadas, renovar a tiempo y configurar monitoreo continuo."
+        },
+        "wrongMitigation": {
+          "attackerView": "Deshabilitar la verificación de clientes o emitir autofirmados sin confianza rompe la autenticación del servidor frente a suplantaciones.",
+          "why": "Un certificado autofirmado depende de una cadena de confianza válida en los clientes; en un servicio público sin esa custodia provoca rechazo o riesgo de aceptación insegura.",
+          "correctControl": "Renovar mediante autoridad confiable con automatización y alertas tempranas de vencimiento."
+        }
+      },
+      "glossaryTermId": "certificado-digital",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html"
+    },
+    {
+      "id": "n3-r5",
+      "objectiveId": "O4",
+      "type": "code-hunt",
+      "title": "Token de restablecimiento generado con Math.random()",
+      "filePath": "auth/resetToken.js",
+      "scenario": "El generador de enlaces de recuperación de contraseña construye el token utilizando Math.random().",
+      "lines": [
+        { "lineNumber": 1, "text": "// Archivo ficticio no ejecutable: generador de token de recuperacion" },
+        { "lineNumber": 2, "text": "export function createDemoResetToken(userId) {" },
+        { "lineNumber": 3, "text": "  const issuedAt = Date.now();" },
+        { "lineNumber": 4, "text": "  const token = Math.random().toString(36).slice(2, 10);" },
+        { "lineNumber": 5, "text": "  return { userId, token, issuedAt };" },
+        { "lineNumber": 6, "text": "}" }
+      ],
+      "vulnerableLineNumbers": [4],
+      "mitigationOptions": [
+        { "id": "append_timestamp", "label": "Concatenar la hora exacta del servidor al resultado de Math.random() antes de devolverlo" },
+        { "id": "base64_math_random", "label": "Convertir la salida de Math.random() a Base64 en lugar de base 36 para mayor longitud" },
+        { "id": "use_csprng", "label": "Generar el token con un CSPRNG, entropía suficiente y expiración breve" }
+      ],
+      "correctMitigationId": "use_csprng",
+      "exposureDelta": 20,
+      "feedbackByOutcome": {
+        "correct": {
+          "attackerView": "Al observar varios tokens generados secuencialmente, un atacante podría inferir el estado interno de Math.random() y predecir tokens de otros usuarios.",
+          "why": "Math.random() no es criptográficamente seguro ni tiene suficiente entropía; solo un CSPRNG garantiza imprevisibilidad para tokens sensibles.",
+          "correctControl": "Reemplazar Math.random() por un CSPRNG estándar con al menos 128 bits de entropía, almacenar el token con expiración breve y uso único."
+        },
+        "wrongLine": {
+          "attackerView": "Dejar sin corregir la generación pseudoaleatoria no criptográfica permite predecir futuros enlaces de recuperación.",
+          "why": "La falla está exactamente en la línea 4, donde Math.random() genera un token corto y predecible.",
+          "correctControl": "Marcar la línea con Math.random() y sustituirla por un CSPRNG criptográfico con longitud y expiración adecuadas."
+        },
+        "wrongMitigation": {
+          "attackerView": "Añadir la marca de tiempo o cambiar a Base64 no añade entropía real frente a quien conoce la hora aproximada de solicitud.",
+          "why": "Transformar la representación o concatenar timestamps predecibles no corrige la falta de aleatoriedad criptográfica de Math.random().",
+          "correctControl": "Emplear exclusivamente un CSPRNG del sistema o plataforma (como crypto.randomBytes o crypto.getRandomValues) con expiración corta."
+        }
+      },
+      "glossaryTermId": "csprng",
+      "owaspRef": "https://top10.owasp.org/2025/A04_2025-Cryptographic_Failures/"
+    },
+    {
+      "id": "n3-r6",
+      "objectiveId": "O3",
+      "type": "code-hunt",
+      "title": "Cifrado RSA sin esquema de relleno (NoPadding)",
+      "filePath": "crypto/envelope.js",
+      "scenario": "Un módulo de encapsulación de llaves de sesión configura RSA sin relleno criptográfico.",
+      "lines": [
+        { "lineNumber": 1, "text": "// Archivo ficticio no ejecutable: encapsulacion de llave" },
+        { "lineNumber": 2, "text": "export const ENVELOPE_SPEC = {" },
+        { "lineNumber": 3, "text": "  algorithm: \"RSA\"," },
+        { "lineNumber": 4, "text": "  keyBits: 2048," },
+        { "lineNumber": 5, "text": "  padding: \"RSA_NO_PADDING\"," },
+        { "lineNumber": 6, "text": "  purpose: \"session-key-wrap\"" },
+        { "lineNumber": 7, "text": "};" }
+      ],
+      "vulnerableLineNumbers": [5],
+      "mitigationOptions": [
+        { "id": "use_rsa_oaep", "label": "Migrar a RSA-OAEP con SHA-256 (o encapsulación moderna) y evitar RSA sin padding" },
+        { "id": "pad_with_zeros", "label": "Mantener RSA_NO_PADDING rellenando manualmente los bloques con ceros a la izquierda" },
+        { "id": "use_aes_ecb", "label": "Sustituir el envoltorio asimétrico de sesión por cifrado AES-ECB con clave fija" }
+      ],
+      "correctMitigationId": "use_rsa_oaep",
+      "exposureDelta": 20,
+      "feedbackByOutcome": {
+        "correct": {
+          "attackerView": "RSA sin padding es determinista y vulnerable a propiedades algebraicas y ataques sobre mensajes cortos o estructurados.",
+          "why": "RSA NoPadding es inseguro. Aunque PKCS#1 v1.5 tampoco equivale a NoPadding (tiene riesgos específicos según uso), RSA-OAEP es el relleno recomendado para cifrado y encapsulación nueva.",
+          "correctControl": "Sustituir RSA_NO_PADDING por RSA-OAEP con SHA-256 o por un esquema moderno autenticado de encapsulación de claves."
+        },
+        "wrongLine": {
+          "attackerView": "No identificar la directiva RSA_NO_PADDING mantiene el cifrado determinista y matemáticamente manipulable.",
+          "why": "RSA con 2048 bits no falla por tamaño mínimo sino en la línea 5, donde se deshabilita el relleno mediante RSA_NO_PADDING.",
+          "correctControl": "Señalar la línea de padding y migrar hacia RSA-OAEP con función hash segura como SHA-256."
+        },
+        "wrongMitigation": {
+          "attackerView": "Rellenar manualmente con ceros sigue siendo determinista, y usar AES-ECB fija filtra patrones y rompe el modelo de intercambio de llaves.",
+          "why": "Ni el relleno determinista con ceros ni AES-ECB sustituyen un padding probabilístico moderno; además, recuerda distinguir NoPadding de PKCS#1 v1.5 y preferir RSA-OAEP.",
+          "correctControl": "Adoptar RSA-OAEP (SHA-256) o un mecanismo moderno de encapsulación de llaves validado por bibliotecas estándar."
+        }
+      },
+      "glossaryTermId": "rsa-oaep",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"
+    }
+  ]
+}

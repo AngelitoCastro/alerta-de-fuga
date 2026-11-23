@@ -1,0 +1,167 @@
+{
+  "version": 1,
+  "terms": [
+    {
+      "id": "texto-plano",
+      "term": "Texto plano (Plaintext)",
+      "definition": "Información legible sin cifrar ni proteger, ya sea mientras viaja por la red o cuando permanece guardada en un archivo o base de datos.",
+      "analogy": "Es parecido a enviar una postal sin sobre por correo tradicional: cualquiera que la manipule en el trayecto puede leer el mensaje.",
+      "analogyLimit": "A diferencia de una postal física, en una red digital los paquetes en texto plano pueden copiarse de forma pasiva y masiva sin dejar rastro ni impedir que lleguen a su destino.",
+      "relatedLevel": 1,
+      "relatedChallengeId": "n1-r1"
+    },
+    {
+      "id": "mitm",
+      "term": "Ataque de intermediario (MitM)",
+      "definition": "Situación en la que un actor posicionado en la ruta de comunicación observa, intercepta o altera mensajes entre el cliente y el servidor sin que las partes lo noten.",
+      "analogy": "Es como alguien que abre una carta en la oficina de correos, la lee o cambia una cifra y la vuelve a cerrar antes de entregarla.",
+      "analogyLimit": "Un intermediario en red puede además inyectar código activo (como JavaScript en páginas sin cifrar) o intentar degradar protocolos en milisegundos; asimismo, una debilidad de transporte indica riesgo, no prueba automáticamente que el ataque ya ocurrió.",
+      "relatedLevel": 1,
+      "relatedChallengeId": "n1-r5"
+    },
+    {
+      "id": "tls",
+      "term": "TLS (Transport Layer Security)",
+      "definition": "Protocolo criptográfico que protege las comunicaciones en red brindando confidencialidad, integridad y autenticación del servidor mediante certificados digitales.",
+      "analogy": "Funciona como una valija sellada e inviolable enviada a un destinatario cuya identidad se verifica antes de entregar la llave.",
+      "analogyLimit": "TLS protege el canal en tránsito entre extremos verificados, pero no corrige vulnerabilidades en la aplicación, ni cifra datos en reposo por sí solo ni compensa versiones obsoletas como TLS 1.0 o cifrados débiles como RC4.",
+      "relatedLevel": 1,
+      "relatedChallengeId": "n1-r2"
+    },
+    {
+      "id": "https",
+      "term": "HTTPS",
+      "definition": "Uso del protocolo HTTP sobre una conexión TLS segura para cifrar los datos intercambiados y verificar la identidad del sitio web o API.",
+      "analogy": "Es equivalente a realizar la misma conversación telefónica de siempre, pero dentro de una línea privada autenticada.",
+      "analogyLimit": "Mostrar el prefijo HTTPS no garantiza por sí solo que el sitio esté libre de fallas: si la página carga scripts externos por HTTP o usa TLS obsoleto, la seguridad del conjunto se debilita.",
+      "relatedLevel": 1,
+      "relatedChallengeId": "n1-r6"
+    },
+    {
+      "id": "hsts",
+      "term": "HSTS (HTTP Strict Transport Security)",
+      "definition": "Cabecera de seguridad que indica al navegador recordar que un dominio solo debe visitarse mediante HTTPS, reduciendo riesgos de degradación a HTTP en visitas posteriores; la lista preload protege también la primera visita.",
+      "analogy": "Es como anotar en la libreta personal que cierta sucursal solo atiende por puerta blindada para no aceptar nunca entrar por la puerta lateral.",
+      "analogyLimit": "La ausencia de HSTS no demuestra por sí misma que exista una interceptación activa; además, HSTS estándar protege visitas posteriores tras el primer contacto HTTPS, mientras que solo la precarga (preload) cubre la primera visita.",
+      "relatedLevel": 1,
+      "relatedChallengeId": "n1-r3"
+    },
+    {
+      "id": "certificado-digital",
+      "term": "Certificado digital",
+      "definition": "Documento electrónico firmado por una autoridad o entidad emisora que vincula una clave pública con la identidad de un dominio o servicio dentro de una cadena de confianza.",
+      "analogy": "Se asemeja a una credencial oficial verificable que confirma quién está detrás de una ventanilla antes de entregarle documentos.",
+      "analogyLimit": "Un certificado autofirmado no es automáticamente inseguro en cualquier contexto: su validez real depende de que el entorno y el cliente tengan configurada una cadena de confianza controlada y vigente.",
+      "relatedLevel": 1,
+      "relatedChallengeId": "n1-r4"
+    },
+    {
+      "id": "hash",
+      "term": "Hash criptográfico",
+      "definition": "Función matemática unidireccional que transforma datos de longitud arbitraria en un resumen de tamaño fijo; no permite recuperar el dato original invirtiendo el cálculo.",
+      "analogy": "Es similar a triturar una receta en un resumen único verificable: sirve para comprobar si dos muestras coinciden, pero no para reconstruir la hoja.",
+      "analogyLimit": "No todos los hashes sirven para contraseñas: algoritmos rápidos como MD5, SHA-1 o SHA-256 permiten probar miles de millones de intentos por segundo offline y no sustituyen controles de tarjetas.",
+      "relatedLevel": 2,
+      "relatedChallengeId": "n2-r1"
+    },
+    {
+      "id": "salt",
+      "term": "Salt (sal criptográfica)",
+      "definition": "Valor aleatorio único generado por cada registro y combinado con la contraseña antes de calcular el hash, impidiendo que contraseñas iguales generen el mismo resumen.",
+      "analogy": "Es como añadir un código único distinto a cada expediente antes de archivarlo para que dos expedientes con el mismo contenido no parezcan idénticos.",
+      "analogyLimit": "El salt no necesita ser secreto ni compensa por sí solo un algoritmo rápido como MD5 o SHA-1; debe usarse siempre junto con una función lenta específica para contraseñas como Argon2id.",
+      "relatedLevel": 2,
+      "relatedChallengeId": "n2-r1"
+    },
+    {
+      "id": "argon2id",
+      "term": "Argon2id",
+      "definition": "Función moderna de derivación y hashing de contraseñas que consume tiempo y memoria configurables para dificultar ataques de fuerza bruta por GPU o hardware especializado.",
+      "analogy": "Es como exigir una cerradura pesada que obliga a invertir esfuerzo y espacio físico real en cada intento de prueba.",
+      "analogyLimit": "Su fortaleza no proviene de ocultar el algoritmo, sino de ajustar correctamente los costos de memoria, iteraciones y salt único; además, no aplica a datos que deban descifrarse luego.",
+      "relatedLevel": 2,
+      "relatedChallengeId": "n2-r1"
+    },
+    {
+      "id": "bcrypt",
+      "term": "bcrypt",
+      "definition": "Función adaptativa de hashing para contraseñas con salt integrado y factor de costo configurable, recomendada como alternativa sólida cuando el entorno heredado no soporta Argon2id.",
+      "analogy": "Es una caja de combinación lenta que sigue siendo confiable cuando no es posible instalar el modelo más reciente con exigencia de memoria.",
+      "analogyLimit": "Aunque es mucho más segura que MD5 o SHA-1, bcrypt tiene menor resistencia frente a memoria paralela que Argon2id y trunca contraseñas largas alrededor de 72 bytes según la implementación.",
+      "relatedLevel": 2,
+      "relatedChallengeId": "n2-r2"
+    },
+    {
+      "id": "aes-gcm",
+      "term": "AES-GCM",
+      "definition": "Modo de cifrado autenticado (AEAD) basado en AES que protege simultáneamente la confidencialidad e integridad de datos que necesitan recuperarse.",
+      "analogy": "Es como guardar un documento en una caja fuerte con sello de autenticidad que delata cualquier intento de manipulación.",
+      "analogyLimit": "La seguridad de AES-GCM depende estrictamente de usar un nonce único por cada operación con la misma clave, además de custodiar las llaves correctamente; reutilizar un nonce destruye sus garantías.",
+      "relatedLevel": 2,
+      "relatedChallengeId": "n2-r3"
+    },
+    {
+      "id": "aes-ecb",
+      "term": "AES-ECB",
+      "definition": "Modo de cifrado por bloques determinista e inseguro para datos generales que cifra bloques idénticos en textos cifrados idénticos y carece de etiqueta de autenticación.",
+      "analogy": "Es parecido a reemplazar cada palabra por el mismo símbolo fijo: aunque no se lea la palabra exacta, se distinguen fácilmente las repeticiones.",
+      "analogyLimit": "Usar AES como algoritmo base no hace seguro a ECB: los patrones repetitivos siguen visibles en la estructura cifrada y un atacante podría reordenar bloques sin detección.",
+      "relatedLevel": 2,
+      "relatedChallengeId": "n2-r4"
+    },
+    {
+      "id": "nonce-iv",
+      "term": "Nonce / IV (Vector de Inicialización)",
+      "definition": "Valor numérico usado una sola vez junto con una clave criptográfica para asegurar que cifrar el mismo texto plano produzca salidas distintas.",
+      "analogy": "Es como cambiar el número de serie único de cada envío para que dos paquetes con contenido igual nunca luzcan iguales por fuera.",
+      "analogyLimit": "Un nonce no reemplaza a la clave secreta ni tiene que ocultarse, pero en modos como AES-GCM jamás debe reutilizarse bajo la misma clave, pues compromete confidencialidad y autenticación.",
+      "relatedLevel": 2,
+      "relatedChallengeId": "n2-r5"
+    },
+    {
+      "id": "tokenizacion",
+      "term": "Tokenización",
+      "definition": "Técnica que sustituye un dato sensible (como el PAN de una tarjeta para cobros recurrentes) por un identificador sustituto sin valor intrínseco fuera de la bóveda autorizada.",
+      "analogy": "Es equivalente a usar un boleto de guardarropa con número temporal en lugar de dejar el documento original a la vista en cada mostrador.",
+      "analogyLimit": "Tokenizar reduce la exposición y el alcance operativo, pero nunca sustituye todos los controles exigidos por PCI DSS ni autoriza conservar el CVV después de la autorización.",
+      "relatedLevel": 2,
+      "relatedChallengeId": "n2-r6"
+    },
+    {
+      "id": "rsa-oaep",
+      "term": "RSA-OAEP",
+      "definition": "Esquema probabilístico recomendado de relleno para cifrado y encapsulación de llaves con RSA, que supera las debilidades deterministas de RSA sin padding y los riesgos heredados de PKCS#1 v1.5.",
+      "analogy": "Es como envolver una llave pequeña dentro de un paquete acolchado aleatorio antes de cerrarlo para que no revele pistas matemáticas.",
+      "analogyLimit": "RSA sin padding (NoPadding) es inseguro y no debe usarse; PKCS#1 v1.5 y RSA-OAEP tampoco son iguales y sus riesgos dependen del caso de uso, siendo RSA-OAEP la opción recomendada para cifrado nuevo.",
+      "relatedLevel": 3,
+      "relatedChallengeId": "n3-r6"
+    },
+    {
+      "id": "gestion-secretos",
+      "term": "Gestión de secretos",
+      "definition": "Práctica y conjunto de servicios especializados (gestores de secretos o KMS/HSM) para almacenar, rotar, auditar y entregar llaves y credenciales de forma controlada fuera del código fuente.",
+      "analogy": "Es comparable a una bóveda bancaria con registro de quién entra y llaves temporales, en vez de dejar la llave bajo el tapete de la puerta.",
+      "analogyLimit": "Guardar secretos en un archivo .env o una variable de entorno por sí solo no equivale a un gestor seguro de secretos, ya que carece de rotación automática, cifrado dedicado y auditoría de acceso.",
+      "relatedLevel": 3,
+      "relatedChallengeId": "n3-r1"
+    },
+    {
+      "id": "csprng",
+      "term": "CSPRNG (Generador pseudoaleatorio criptográfico)",
+      "definition": "Generador de números aleatorios diseñado para resistir predicciones incluso cuando un observador conoce salidas previas, indispensable para tokens, llaves, nonces y salts.",
+      "analogy": "Es como sortear números con un mecanismo sellado impredecible en lugar de usar una secuencia que cualquiera puede deducir observando los primeros turnos.",
+      "analogyLimit": "Funciones comunes como Math.random() producen aleatoriedad estadística rápida para juegos o interfaces, no imprevisibilidad criptográfica; nunca deben generar tokens de seguridad.",
+      "relatedLevel": 3,
+      "relatedChallengeId": "n3-r5"
+    },
+    {
+      "id": "minimizacion-datos",
+      "term": "Minimización de datos",
+      "definition": "Principio de recopilar, procesar y conservar únicamente los datos estrictamente necesarios y durante el menor tiempo posible, eliminando valores prohibidos o sin propósito vigente.",
+      "analogy": "Es como no guardar copias de llaves o documentos antiguos que ya no necesitas, reduciendo lo que podría perderse si ocurre un robo.",
+      "analogyLimit": "Minimizar no significa borrar datos exigidos por ley o facturación activa, pero sí obliga a purgar historial innecesario y prohíbe tajantemente guardar el CVV tras autorizar un pago, incluso cifrado.",
+      "relatedLevel": 2,
+      "relatedChallengeId": "n2-r7"
+    }
+  ]
+}

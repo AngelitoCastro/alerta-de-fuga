@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "type": "pre",
+  "questions": [
+    {
+      "id": "pre-q1",
+      "objectiveId": "O1",
+      "prompt": "Un portal de clientes de NovaPay atiende inicialmente en http://portal.novapay.example sin cabecera HSTS ni precarga. ¿Qué afirmación técnica describe con precisión el riesgo y la protección adecuada?",
+      "options": [
+        { "id": "a", "label": "La ausencia de HSTS demuestra por sí sola que el tráfico de ese cliente ya está siendo interceptado activamente en la red local." },
+        { "id": "b", "label": "No demuestra interceptación, pero expone el salto inicial; HSTS protege visitas posteriores y preload la primera visita." },
+        { "id": "c", "label": "Basta con mantener HTTP en la primera petición si el formulario interno aplica codificación Base64 antes de enviar datos." },
+        { "id": "d", "label": "Emitir HSTS en respuestas HTTP sin TLS bloquea degradación inicial sin exigir HTTPS." }
+      ],
+      "correctOptionId": "b",
+      "explanation": "La falta de HSTS indica una condición de riesgo en transporte, no una prueba de interceptación consumada. Configurar HTTPS con redirección segura y cabecera HSTS mitiga la degradación en visitas posteriores, mientras que la precarga (preload) extiende la protección al primer contacto.",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html",
+      "glossaryTermId": "hsts"
+    },
+    {
+      "id": "pre-q2",
+      "objectiveId": "O2",
+      "prompt": "Para procesar cobros recurrentes en NovaPay tras completar la autorización inicial de una tarjeta, ¿qué tratamiento cumple correctamente con PCI DSS y la separación entre PAN y CVV?",
+      "options": [
+        { "id": "a", "label": "Guardar PAN y CVV cifrados juntos con AES-GCM en la misma tabla operativa para agilizar futuras validaciones de pago." },
+        { "id": "b", "label": "Aplicar únicamente tokenización al PAN y al CVV en la base, sustituyendo así todos los demás controles exigidos por PCI DSS." },
+        { "id": "c", "label": "Conservar el CVV cifrado en una bóveda separada durante noventa días calendario por si ocurre algún contracargo posterior." },
+        { "id": "d", "label": "Separar PAN y CVV: no guardar CVV tras autorizar (ni cifrado) y tokenizar el PAN solo si hace falta, sin omitir PCI DSS." }
+      ],
+      "correctOptionId": "d",
+      "explanation": "PAN y CVV tienen reglas distintas: PCI DSS prohíbe conservar el CVV después de la autorización, incluso cifrado o tokenizado. Cuando los cobros recurrentes exigen una referencia del PAN, la tokenización reduce la exposición y el alcance, aunque nunca sustituye la totalidad de los controles PCI DSS.",
+      "owaspRef": "https://www.pcisecuritystandards.org/faqs/are-merchants-allowed-to-request-card-verification-codes-values-from-cardholders/",
+      "glossaryTermId": "tokenizacion"
+    },
+    {
+      "id": "pre-q3",
+      "objectiveId": "O3",
+      "prompt": "Al auditar el cifrado de reportes de saldos en reposo, descubres que el módulo actual utiliza AES-ECB. ¿Por qué debe sustituirse y qué exige su reemplazo recomendado?",
+      "options": [
+        { "id": "a", "label": "AES-ECB produce salidas idénticas en bloques iguales y no autentica integridad; debe migrarse a AES-GCM con nonce único por clave." },
+        { "id": "b", "label": "AES-ECB es un hash irreversible; conviene reemplazarlo por SHA-256 rápido para poder recuperar los saldos con menor costo." },
+        { "id": "c", "label": "AES-ECB solo es débil cuando usa clave de 256 bits, por lo que basta con reducirla a 128 bits y reutilizar el mismo IV." },
+        { "id": "d", "label": "AES-GCM permite reutilizar indefinidamente el mismo nonce con la misma clave siempre que los saldos sean solo numéricos." }
+      ],
+      "correctOptionId": "a",
+      "explanation": "AES-ECB es determinista, revela patrones entre bloques repetidos y carece de verificación de integridad. Migrar a cifrado autenticado como AES-GCM resuelve ambas carencias siempre que nunca se reutilice un nonce bajo la misma clave.",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html",
+      "glossaryTermId": "aes-ecb"
+    },
+    {
+      "id": "pre-q4",
+      "objectiveId": "O4",
+      "prompt": "El servicio de recuperación de acceso en https://auth.novapay.example genera el código temporal de restablecimiento con Math.random(). ¿Qué riesgo implica y cómo debe corregirse?",
+      "options": [
+        { "id": "a", "label": "No existe riesgo alguno porque el canal usa HTTPS y TLS oculta por completo los valores generados en el servidor de acceso." },
+        { "id": "b", "label": "Basta con codificar la salida de Math.random() en Base64 y añadir la marca horaria del servidor para volverla impredecible." },
+        { "id": "c", "label": "Math.random() es predecible y no es criptográfico; conviene usar un CSPRNG con entropía suficiente y expiración breve." },
+        { "id": "d", "label": "Debe sustituirse Math.random() por un algoritmo determinista como AES-ECB con nonce fijo para evitar colisiones de acceso." }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Aunque HTTPS protege el tránsito, no corrige la previsibilidad de origen: un observador que analice tokens emitidos puede inferir salidas de Math.random(). Los tokens sensibles requieren un CSPRNG estándar, entropía adecuada y expiración corta.",
+      "owaspRef": "https://top10.owasp.org/2025/A04_2025-Cryptographic_Failures/",
+      "glossaryTermId": "csprng"
+    },
+    {
+      "id": "pre-q5",
+      "objectiveId": "O5",
+      "prompt": "Durante una revisión rutinaria se detecta que un archivo .env con credenciales de un entorno de staging estuvo publicado temporalmente en un repositorio de NovaPay. ¿Cuál es la respuesta proporcionada?",
+      "options": [
+        { "id": "a", "label": "Añadir el archivo a .gitignore en el próximo commit y evitar avisar al equipo para no generar alarmas internas innecesarias." },
+        { "id": "b", "label": "Revocar y rotar de inmediato esas credenciales, limpiar el historial, auditar accesos y usar un gestor de secretos." },
+        { "id": "c", "label": "Publicar el archivo original en el portal de transparencia técnica para documentar exactamente qué credenciales se emplearon." },
+        { "id": "d", "label": "Mover las mismas claves sin rotarlas a variables de entorno del servidor, pues eso equivale por sí solo a un gestor seguro." }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Una credencial expuesta en un repositorio debe considerarse comprometida aunque el archivo se oculte después con .gitignore. La respuesta proporcionada combina revocación y rotación inmediata, revisión de accesos, limpieza del historial y uso de un gestor seguro de secretos.",
+      "owaspRef": "https://top10.owasp.org/2025/es/A04_2025-Cryptographic_Failures/",
+      "glossaryTermId": "gestion-secretos"
+    }
+  ]
+}

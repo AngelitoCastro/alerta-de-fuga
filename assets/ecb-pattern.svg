@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 250" width="420" height="250" role="img" aria-labelledby="ecb-title ecb-desc">
+  <title id="ecb-title">Comparación visual entre AES-ECB y AES-GCM</title>
+  <desc id="ecb-desc">Bloques de entrada repetidos producen bloques cifrados idénticos en AES-ECB, mientras AES-GCM con nonce único produce bloques sin patrón visible.</desc>
+
+  <!-- Fondo base -->
+  <rect x="0" y="0" width="420" height="250" rx="10" fill="#0B1016" stroke="#2A394A" stroke-width="2" />
+
+  <!-- Sección superior: Entrada de bloques idénticos -->
+  <text x="210" y="23" text-anchor="middle" fill="#F0F6FC" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700">Entrada (bloques de datos repetidos)</text>
+  <g>
+    <!-- Fila 1: A B A B -->
+    <rect x="134" y="33" width="34" height="20" rx="3" fill="#58A6FF" stroke="#F0F6FC" stroke-width="1" />
+    <text x="151" y="47" text-anchor="middle" fill="#0B1016" font-family="ui-monospace, monospace" font-size="12" font-weight="700">A</text>
+    <rect x="172" y="33" width="34" height="20" rx="3" fill="#131B26" stroke="#5C7691" stroke-width="1.5" />
+    <text x="189" y="47" text-anchor="middle" fill="#A8B8C8" font-family="ui-monospace, monospace" font-size="12" font-weight="700">B</text>
+    <rect x="210" y="33" width="34" height="20" rx="3" fill="#58A6FF" stroke="#F0F6FC" stroke-width="1" />
+    <text x="227" y="47" text-anchor="middle" fill="#0B1016" font-family="ui-monospace, monospace" font-size="12" font-weight="700">A</text>
+    <rect x="248" y="33" width="34" height="20" rx="3" fill="#131B26" stroke="#5C7691" stroke-width="1.5" />
+    <text x="265" y="47" text-anchor="middle" fill="#A8B8C8" font-family="ui-monospace, monospace" font-size="12" font-weight="700">B</text>
+    <!-- Fila 2: B A B A -->
+    <rect x="134" y="57" width="34" height="20" rx="3" fill="#131B26" stroke="#5C7691" stroke-width="1.5" />
+    <text x="151" y="71" text-anchor="middle" fill="#A8B8C8" font-family="ui-monospace, monospace" font-size="12" font-weight="700">B</text>
+    <rect x="172" y="57" width="34" height="20" rx="3" fill="#58A6FF" stroke="#F0F6FC" stroke-width="1" />
+    <text x="189" y="71" text-anchor="middle" fill="#0B1016" font-family="ui-monospace, monospace" font-size="12" font-weight="700">A</text>
+    <rect x="210" y="57" width="34" height="20" rx="3" fill="#131B26" stroke="#5C7691" stroke-width="1.5" />
+    <text x="227" y="71" text-anchor="middle" fill="#A8B8C8" font-family="ui-monospace, monospace" font-size="12" font-weight="700">B</text>
+    <rect x="248" y="57" width="34" height="20" rx="3" fill="#58A6FF" stroke="#F0F6FC" stroke-width="1" />
+    <text x="265" y="71" text-anchor="middle" fill="#0B1016" font-family="ui-monospace, monospace" font-size="12" font-weight="700">A</text>
+  </g>
+
+  <!-- Flechas de flujo -->
+  <path d="M165 82 L115 98" fill="none" stroke="#5C7691" stroke-width="2" />
+  <polygon points="112,99 120,93 122,100" fill="#5C7691" />
+  <path d="M255 82 L305 98" fill="none" stroke="#5C7691" stroke-width="2" />
+  <polygon points="308,99 298,100 300,93" fill="#5C7691" />
+
+  <!-- Tarjeta izquierda: AES-ECB -->
+  <rect x="14" y="102" width="188" height="134" rx="8" fill="#131B26" stroke="#FF6B6B" stroke-width="1.8" />
+  <text x="108" y="122" text-anchor="middle" fill="#F0F6FC" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="700">AES-ECB (determinista)</text>
+
+  <!-- Bloques repetidos idénticos en ECB -->
+  <rect x="30" y="132" width="36" height="24" rx="3" fill="#FF6B6B" />
+  <text x="48" y="148" text-anchor="middle" fill="#0B1016" font-family="ui-monospace, monospace" font-size="12" font-weight="700">C1</text>
+  <rect x="70" y="132" width="36" height="24" rx="3" fill="#F0B429" />
+  <text x="88" y="148" text-anchor="middle" fill="#0B1016" font-family="ui-monospace, monospace" font-size="12" font-weight="700">C2</text>
+  <rect x="110" y="132" width="36" height="24" rx="3" fill="#FF6B6B" />
+  <text x="128" y="148" text-anchor="middle" fill="#0B1016" font-family="ui-monospace, monospace" font-size="12" font-weight="700">C1</text>
+  <rect x="150" y="132" width="36" height="24" rx="3" fill="#F0B429" />
+  <text x="168" y="148" text-anchor="middle" fill="#0B1016" font-family="ui-monospace, monospace" font-size="12" font-weight="700">C2</text>
+
+  <rect x="30" y="160" width="36" height="24" rx="3" fill="#F0B429" />
+  <text x="48" y="176" text-anchor="middle" fill="#0B1016" font-family="ui-monospace, monospace" font-size="12" font-weight="700">C2</text>
+  <rect x="70" y="160" width="36" height="24" rx="3" fill="#FF6B6B" />
+  <text x="88" y="176" text-anchor="middle" fill="#0B1016" font-family="ui-monospace, monospace" font-size="12" font-weight="700">C1</text>
+  <rect x="110" y="160" width="36" height="24" rx="3" fill="#F0B429" />
+  <text x="128" y="176" text-anchor="middle" fill="#0B1016" font-family="ui-monospace, monospace" font-size="12" font-weight="700">C2</text>
+  <rect x="150" y="160" width="36" height="24" rx="3" fill="#FF6B6B" />
+  <text x="168" y="176" text-anchor="middle" fill="#0B1016" font-family="ui-monospace, monospace" font-size="12" font-weight="700">C1</text>
+
+  <rect x="24" y="196" width="168" height="28" rx="4" fill="#2F252E" stroke="#FF6B6B" stroke-width="1" />
+  <text x="108" y="214" text-anchor="middle" fill="#FF6B6B" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700">✕ Patrón visible (inseguro)</text>
+
+  <!-- Tarjeta derecha: AES-GCM -->
+  <rect x="218" y="102" width="188" height="134" rx="8" fill="#131B26" stroke="#3FB950" stroke-width="1.8" />
+  <text x="312" y="122" text-anchor="middle" fill="#F0F6FC" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="700">AES-GCM (nonce único)</text>
+
+  <!-- Bloques pseudoaleatorios distintos en GCM -->
+  <rect x="234" y="132" width="36" height="24" rx="3" fill="#3FB950" />
+  <text x="252" y="148" text-anchor="middle" fill="#0B1016" font-family="ui-monospace, monospace" font-size="12" font-weight="700">9F</text>
+  <rect x="274" y="132" width="36" height="24" rx="3" fill="#58A6FF" />
+  <text x="292" y="148" text-anchor="middle" fill="#0B1016" font-family="ui-monospace, monospace" font-size="12" font-weight="700">2A</text>
+  <rect x="314" y="132" width="36" height="24" rx="3" fill="#A8B8C8" />
+  <text x="332" y="148" text-anchor="middle" fill="#0B1016" font-family="ui-monospace, monospace" font-size="12" font-weight="700">E4</text>
+  <rect x="354" y="132" width="36" height="24" rx="3" fill="#1B2C40" stroke="#58A6FF" stroke-width="1" />
+  <text x="372" y="148" text-anchor="middle" fill="#F0F6FC" font-family="ui-monospace, monospace" font-size="12" font-weight="700">7C</text>
+
+  <rect x="234" y="160" width="36" height="24" rx="3" fill="#202C3A" stroke="#5C7691" stroke-width="1" />
+  <text x="252" y="176" text-anchor="middle" fill="#F0F6FC" font-family="ui-monospace, monospace" font-size="12" font-weight="700">B1</text>
+  <rect x="274" y="160" width="36" height="24" rx="3" fill="#3FB950" />
+  <text x="292" y="176" text-anchor="middle" fill="#0B1016" font-family="ui-monospace, monospace" font-size="12" font-weight="700">4D</text>
+  <rect x="314" y="160" width="36" height="24" rx="3" fill="#2A394A" stroke="#5C7691" stroke-width="1" />
+  <text x="332" y="176" text-anchor="middle" fill="#F0F6FC" font-family="ui-monospace, monospace" font-size="12" font-weight="700">08</text>
+  <rect x="354" y="160" width="36" height="24" rx="3" fill="#58A6FF" />
+  <text x="372" y="176" text-anchor="middle" fill="#0B1016" font-family="ui-monospace, monospace" font-size="12" font-weight="700">C6</text>
+
+  <rect x="228" y="196" width="168" height="28" rx="4" fill="#182E2B" stroke="#3FB950" stroke-width="1" />
+  <text x="312" y="214" text-anchor="middle" fill="#3FB950" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700">✓ Sin patrón legible (seguro)</text>
+</svg>

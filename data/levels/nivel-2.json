@@ -1,0 +1,302 @@
+{
+  "level": 2,
+  "title": "La Bóveda de Texto Plano",
+  "objectiveIds": ["O2", "O3", "O5"],
+  "buckets": [
+    {
+      "id": "hash_password",
+      "label": "Hash de contraseñas",
+      "description": "Usar Argon2id (o bcrypt por compatibilidad en legado) con salt único por registro."
+    },
+    {
+      "id": "authenticated_encryption",
+      "label": "Cifrado autenticado",
+      "description": "Aplicar AES-GCM con nonce único por clave y gestión segura de llaves."
+    },
+    {
+      "id": "tokenize_minimize",
+      "label": "Tokenizar o reducir exposición",
+      "description": "Sustituir por token cuando sea necesario y aplicar controles PCI DSS."
+    },
+    {
+      "id": "delete_do_not_store",
+      "label": "Eliminar / no almacenar",
+      "description": "Purgar datos prohibidos o innecesarios según norma y política de retención."
+    }
+  ],
+  "challenges": [
+    {
+      "id": "n2-r1",
+      "objectiveId": "O3",
+      "type": "data-classifier",
+      "title": "Contraseña almacenada en MD5 sin salt",
+      "scenario": "La tabla de usuarios antiguos de NovaPay guarda resúmenes MD5 sin salt por cada contraseña.",
+      "recordLabel": "clave_md5_sin_salt: \"md5_ejemplo_sin_salt_00a1b2c3\"",
+      "correctOptionId": "hash_password",
+      "exposureDelta": 15,
+      "feedbackByOption": {
+        "hash_password": {
+          "attackerView": "Si se filtra la base de datos, un atacante podría probar miles de millones de contraseñas por segundo o usar tablas precalculadas al faltar salt.",
+          "why": "MD5 es un algoritmo rápido y roto para contraseñas; sin salt único, contraseñas idénticas generan el mismo resumen.",
+          "correctControl": "Migrar a Argon2id con salt aleatorio único por contraseña (o bcrypt en sistemas legados incompatibles) mediante verificación al iniciar sesión."
+        },
+        "authenticated_encryption": {
+          "attackerView": "Si las contraseñas se cifran en lugar de derivarse con hash lento, quien obtenga la clave de cifrado podría recuperar todas las claves originales.",
+          "why": "Las contraseñas deben verificarse mediante funciones de derivación unidireccionales lentas como Argon2id, no mediante cifrado reversible.",
+          "correctControl": "Aplicar hash específico de contraseñas (Argon2id con salt único), reservando AES-GCM para datos que sí deban recuperarse."
+        },
+        "tokenize_minimize": {
+          "attackerView": "Un identificador o token estático no sustituye la verificación criptográfica de contraseñas ni frena ataques de fuerza bruta offline si hay fuga.",
+          "why": "Tokenizar reemplaza referencias de datos, no resuelve cómo verificar una contraseña ingresada por el usuario de forma segura.",
+          "correctControl": "Usar un hash lento resistente a memoria como Argon2id con salt único para almacenar credenciales."
+        },
+        "delete_do_not_store": {
+          "attackerView": "Dejar los registros en MD5 sin migrar mantiene el riesgo, aunque eliminar el acceso por completo sin migración impediría autenticar usuarios.",
+          "why": "El sistema necesita autenticar a sus usuarios legítimos; el control correcto no es borrar toda autenticación sino reemplazar MD5 por Argon2id.",
+          "correctControl": "Migrar las credenciales hacia Argon2id con salt único y forzar cambio o re-hash seguro en el siguiente acceso."
+        }
+      },
+      "glossaryTermId": "argon2id",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html"
+    },
+    {
+      "id": "n2-r2",
+      "objectiveId": "O3",
+      "type": "data-classifier",
+      "title": "Contraseña con SHA-1 de iteración única",
+      "scenario": "Un módulo heredado calcula SHA-1 de una sola pasada sobre las contraseñas del portal de comercios.",
+      "recordLabel": "clave_sha1_rapido: \"sha1_ejemplo_rapido_00d4e5f6\"",
+      "correctOptionId": "hash_password",
+      "exposureDelta": 15,
+      "feedbackByOption": {
+        "hash_password": {
+          "attackerView": "Ante una filtración de la tabla, hardware moderno podría ejecutar búsquedas por diccionario a altísima velocidad contra resúmenes SHA-1 rápidos.",
+          "why": "SHA-1 de iteración única carece de factor de costo adaptable y resistencia en memoria; debe sustituirse por Argon2id o bcrypt cuando exista restricción de legado.",
+          "correctControl": "Migrar a Argon2id con parámetros de memoria y tiempo adecuados, o emplear bcrypt si la plataforma heredada no soporta Argon2id."
+        },
+        "authenticated_encryption": {
+          "attackerView": "Al cifrar reversiblemente las credenciales, comprometer la llave permitiría descifrar las contraseñas en texto plano.",
+          "why": "El sistema no necesita recuperar la contraseña en claro para autenticar al usuario, por lo que no corresponde usar cifrado simétrico.",
+          "correctControl": "Almacenar únicamente un hash lento para contraseñas como Argon2id o bcrypt con salt único."
+        },
+        "tokenize_minimize": {
+          "attackerView": "Reemplazar por un token no protege contra intentos de adivinación si la función de verificación sigue basándose en SHA-1 rápido.",
+          "why": "La tokenización se aplica a datos sensibles reutilizables (como referencias de pago), no a la verificación de contraseñas.",
+          "correctControl": "Implementar Argon2id (o bcrypt por compatibilidad documentada) con salt único generado con CSPRNG."
+        },
+        "delete_do_not_store": {
+          "attackerView": "Mantener SHA-1 rápido facilita ataques offline, pero borrar las credenciales sin reemplazo bloquearía a todos los comercios.",
+          "why": "Los comercios requieren autenticarse; el tratamiento adecuado es reemplazar el hash débil por un algoritmo diseñado para contraseñas.",
+          "correctControl": "Migrar a la categoría de hash de contraseñas usando Argon2id o bcrypt con costo adecuado."
+        }
+      },
+      "glossaryTermId": "bcrypt",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html"
+    },
+    {
+      "id": "n2-r3",
+      "objectiveId": "O2",
+      "type": "data-classifier",
+      "title": "Datos fiscales requeridos para facturación",
+      "scenario": "NovaPay debe emitir comprobantes fiscales mensuales y necesita recuperar el identificador tributario de cada comercio registrado.",
+      "recordLabel": "id_fiscal_cliente: \"NIF-DEMO-000123 (necesario para factura)\"",
+      "correctOptionId": "authenticated_encryption",
+      "exposureDelta": 15,
+      "feedbackByOption": {
+        "hash_password": {
+          "attackerView": "Aunque un hash protegería el secreto si hubiera copia, la función unidireccional impediría recuperar el dato fiscal para facturar.",
+          "why": "Un hash es irreversible: sirve para verificar contraseñas, no para almacenar información que el negocio necesita leer después.",
+          "correctControl": "Aplicar cifrado autenticado (AES-GCM con nonce único y gestión segura de llaves) para recuperar el dato cuando se emita la factura."
+        },
+        "authenticated_encryption": {
+          "attackerView": "Si el identificador fiscal quedara en texto plano o cifrado sin autenticación, una lectura o alteración en base de datos comprometería la facturación.",
+          "why": "Como el proceso legítimo exige recuperar el valor exacto, corresponde usar cifrado autenticado (AEAD) como AES-GCM junto con control de acceso y gestión segura de claves.",
+          "correctControl": "Cifrar en reposo con AES-GCM usando nonce único por clave, proteger las llaves en KMS/gestor de secretos y limitar retención."
+        },
+        "tokenize_minimize": {
+          "attackerView": "Si solo se reemplaza el campo sin proteger la bóveda de origen, el dato fiscal seguiría expuesto en la tabla de mapeo.",
+          "why": "Aunque minimizar accesos ayuda, aquí se requiere cifrar el dato fiscal recuperable en reposo con autenticación de integridad.",
+          "correctControl": "Proteger los datos fiscales recuperables mediante cifrado autenticado AES-GCM y restringir su acceso al servicio de facturación."
+        },
+        "delete_do_not_store": {
+          "attackerView": "Eliminar datos necesarios para una obligación legal interrumpe la operación legítima, aunque reduzca la superficie almacenada.",
+          "why": "La minimización exige eliminar datos innecesarios, pero en este caso el dato fiscal es requerido por el proceso de facturación vigente.",
+          "correctControl": "Conservar solo por el plazo obligatorio y protegerlo con cifrado autenticado AES-GCM y llaves gestionadas fuera del código."
+        }
+      },
+      "glossaryTermId": "aes-gcm",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"
+    },
+    {
+      "id": "n2-r4",
+      "objectiveId": "O3",
+      "type": "data-classifier",
+      "title": "Saldos cifrados con AES-ECB (patrones visibles)",
+      "scenario": "El reporte de saldos diarios cifra bloques idénticos con el mismo texto cifrado usando modo ECB y sin etiqueta de integridad.",
+      "recordLabel": "saldo_aes_ecb: \"[BLOQUE_01][BLOQUE_01][BLOQUE_02] (bloques repetidos)\"",
+      "visualAsset": "assets/ecb-pattern.svg",
+      "correctOptionId": "authenticated_encryption",
+      "exposureDelta": 20,
+      "feedbackByOption": {
+        "hash_password": {
+          "attackerView": "Usar un hash impediría conocer el saldo real en operaciones legítimas, además de no ofrecer autenticación de integridad del registro.",
+          "why": "El saldo debe poder consultarse y actualizarse de forma reversible y verificable; el hashing de contraseñas no aplica a registros financieros recuperables.",
+          "correctControl": "Migrar de AES-ECB a cifrado autenticado AES-GCM con nonce único por operación."
+        },
+        "authenticated_encryption": {
+          "attackerView": "En AES-ECB, bloques iguales producen textos cifrados iguales, lo que permite inferir patrones repetitivos y manipular bloques sin detección.",
+          "why": "ECB es determinista y carece de autenticación; sustituirlo por AES-GCM oculta repeticiones mediante nonces únicos y detecta alteraciones.",
+          "correctControl": "Reemplazar AES-ECB por AES-GCM con nonce único por clave y verificar siempre la etiqueta de autenticación antes de usar el dato."
+        },
+        "tokenize_minimize": {
+          "attackerView": "Si el almacén subyacente conserva AES-ECB, la fuga de patrones estructurales persiste debajo de cualquier referencia.",
+          "why": "La falla central es el modo criptográfico ECB aplicado al dato recuperable; debe sustituirse por cifrado autenticado moderno.",
+          "correctControl": "Re-cifrar los saldos con AES-GCM y nonce único, retirando por completo el modo ECB."
+        },
+        "delete_do_not_store": {
+          "attackerView": "Dejar registros activos bajo AES-ECB mantiene la filtración de patrones mientras la aplicación dependa de los saldos.",
+          "why": "Los saldos de cuentas son datos operativos legítimos que no pueden borrarse arbitrariamente; lo erróneo es el modo ECB.",
+          "correctControl": "Proteger los saldos mediante cifrado autenticado AES-GCM con gestión segura de claves."
+        }
+      },
+      "glossaryTermId": "aes-ecb",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"
+    },
+    {
+      "id": "n2-r5",
+      "objectiveId": "O3",
+      "type": "data-classifier",
+      "title": "AES-GCM con reutilización de nonce",
+      "scenario": "Un servicio de archivos cifra documentos usando AES-GCM con una clave compartida y un contador de nonce reiniciado a cero en cada arranque.",
+      "recordLabel": "registro_gcm_reuso: \"nonce_fijo_00000001 (reutilizado bajo misma clave)\"",
+      "correctOptionId": "authenticated_encryption",
+      "exposureDelta": 20,
+      "feedbackByOption": {
+        "hash_password": {
+          "attackerView": "Convertir documentos cifrados en hashes destruye la capacidad de recuperarlos y no corrige la gestión del esquema AEAD.",
+          "why": "Los documentos requieren recuperación íntegra; el problema está en la generación de nonces dentro de AES-GCM, no en el uso de cifrado reversible.",
+          "correctControl": "Corregir la implementación de cifrado autenticado asegurando unicidad estricta del nonce por clave y rotando la clave afectada."
+        },
+        "authenticated_encryption": {
+          "attackerView": "Reutilizar un nonce bajo la misma clave en AES-GCM permite recuperar diferencias entre textos planos y compromete gravemente la clave de autenticación.",
+          "why": "La seguridad de AES-GCM exige, entre otras condiciones, no repetir nunca el par (clave, nonce) y utilizar una implementación y rotación de claves correctas.",
+          "correctControl": "Rotar la clave expuesta a reutilización, generar nonces únicos garantizados por clave (p. ej. 96 bits aleatorios con límites de volumen o KMS/envelope encryption)."
+        },
+        "tokenize_minimize": {
+          "attackerView": "Tokenizar referencias externas no evita que dos documentos cifrados con el mismo par clave-nonce pierdan confidencialidad e integridad.",
+          "why": "La vulnerabilidad reside en el uso incorrecto de AES-GCM; es necesario corregir la unicidad del nonce y rotar las claves.",
+          "correctControl": "Aplicar cifrado autenticado correctamente con nonce único por clave y re-cifrar los datos bajo una llave nueva."
+        },
+        "delete_do_not_store": {
+          "attackerView": "Conservar documentos con nonces repetidos mantiene la debilidad, mientras que borrar documentos necesarios rompe el servicio.",
+          "why": "Si los documentos son legítimos y necesarios, el remedio no es eliminarlos sino corregir el esquema de cifrado autenticado.",
+          "correctControl": "Rotar las claves, implementar generación segura de nonces únicos en AES-GCM y re-cifrar los registros válidos."
+        }
+      },
+      "glossaryTermId": "nonce-iv",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"
+    },
+    {
+      "id": "n2-r6",
+      "objectiveId": "O2",
+      "type": "data-classifier",
+      "title": "PAN en tabla de cobros recurrentes",
+      "scenario": "La aplicación de suscripciones almacena el número completo de tarjeta (PAN) en una tabla operativa consultada por varios microservicios de facturación.",
+      "recordLabel": "pan_recurrente_demo: \"4000-00XX-XXXX-0000 (PAN ficticio)\"",
+      "correctOptionId": "tokenize_minimize",
+      "exposureDelta": 15,
+      "feedbackByOption": {
+        "hash_password": {
+          "attackerView": "Un hash simple sobre un PAN de formato acotado podría revertirse por búsqueda exhaustiva y además impediría procesar cobros si no hay token o bóveda.",
+          "why": "El hashing de contraseñas no protege adecuadamente un PAN por su espacio numérico limitado ni sustituye los controles de tarjetas.",
+          "correctControl": "No almacenar el PAN si no es necesario; si el cobro recurrente lo exige, tokenizarlo en el procesador/bóveda y cumplir PCI DSS."
+        },
+        "authenticated_encryption": {
+          "attackerView": "Cifrar el PAN dentro de la base compartida deja el alcance PCI DSS extendido a todos los microservicios que acceden a la tabla o a la clave.",
+          "why": "PAN y CVV se tratan por separado: cuando la operación requiere referencia recurrente, reducir el alcance mediante tokenización es preferible a distribuir PAN cifrado.",
+          "correctControl": "Sustituir el PAN en tablas operativas por un token no sensible, recordando que tokenizar reduce exposición pero no reemplaza toda obligación PCI DSS."
+        },
+        "tokenize_minimize": {
+          "attackerView": "Mantener el PAN completo replicado en múltiples servicios amplía la superficie expuesta ante cualquier compromiso de base de datos.",
+          "why": "Si el PAN no se necesita, no debe guardarse; cuando el cobro recurrente lo requiere, la tokenización reduce la exposición y el alcance, aunque nunca sustituye por sí sola todos los controles PCI DSS.",
+          "correctControl": "Delegar el PAN a una bóveda o proveedor certificado, almacenar solo un token operativo y mantener controles PCI DSS de acceso, cifrado y monitoreo."
+        },
+        "delete_do_not_store": {
+          "attackerView": "Aunque eliminar datos innecesarios reduce riesgo, borrar la referencia recurrente sin tokenización rompería las suscripciones autorizadas por el cliente.",
+          "why": "Si el negocio no necesitara cobros recurrentes debería eliminarlo; como sí requiere referencia operativa, corresponde tokenizar y minimizar exposición.",
+          "correctControl": "Reemplazar el PAN en las tablas operativas por un token seguro y purgar copias redundantes, manteniendo el cumplimiento PCI DSS."
+        }
+      },
+      "glossaryTermId": "tokenizacion",
+      "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"
+    },
+    {
+      "id": "n2-r7",
+      "objectiveId": "O5",
+      "type": "data-classifier",
+      "title": "CVV guardado después de la autorización",
+      "scenario": "Tras aprobar la transacción con la red de pagos, el módulo de checkout persiste el código de verificación de tarjeta (CVV) cifrado para supuestos reintentos.",
+      "recordLabel": "cvv_post_autorizacion: \"XXX (conservado tras aprobar cobro)\"",
+      "correctOptionId": "delete_do_not_store",
+      "exposureDelta": 25,
+      "feedbackByOption": {
+        "hash_password": {
+          "attackerView": "Conservar el CVV en cualquier forma tras autorizar viola la norma y un código de 3 o 4 dígitos puede adivinarse fácilmente si se expone su resumen.",
+          "why": "PAN y CVV tienen reglas distintas: PCI DSS prohíbe conservar el código de verificación después de la autorización, incluso con hash o cifrado.",
+          "correctControl": "Eliminar de inmediato todo CVV almacenado y corregir el flujo para descartarlo de memoria tras completar la autorización."
+        },
+        "authenticated_encryption": {
+          "attackerView": "Incluso protegido con AES-GCM, si un atacante compromete el servicio o las llaves tendría acceso a un dato crítico prohibido tras el cobro.",
+          "why": "A diferencia de otros datos, PCI DSS prohíbe estrictamente almacenar el CVV después de la autorización, incluso cifrado.",
+          "correctControl": "Purgar todos los registros con CVV y modificar la aplicación para no persistirlo nunca tras autorizar la operación."
+        },
+        "tokenize_minimize": {
+          "attackerView": "Mantener un CVV en una bóveda o sistema de tokens tras autorizar sigue infringiendo la prohibición de retención posterior a la autorización.",
+          "why": "La tokenización aplica a referencias de PAN cuando se justifican, nunca autoriza retener el CVV después de finalizar la autorización.",
+          "correctControl": "Eliminar por completo el almacenamiento de CVV y usar tokens de PAN emitidos por el procesador para cobros posteriores."
+        },
+        "delete_do_not_store": {
+          "attackerView": "Retener CVV tras autorizar aumenta gravemente el impacto de una eventual brecha sobre datos que nunca debieron persistirse.",
+          "why": "Tratar PAN y CVV por separado es obligatorio: PCI DSS prohíbe conservar el CVV después de la autorización, incluso cifrado o tokenizado.",
+          "correctControl": "Eliminar todos los CVV almacenados, limpiar registros o logs donde hayan quedado y asegurar su descarte inmediato tras autorizar."
+        }
+      },
+      "glossaryTermId": "minimizacion-datos",
+      "owaspRef": "https://www.pcisecuritystandards.org/faqs/are-merchants-allowed-to-request-card-verification-codes-values-from-cardholders/"
+    },
+    {
+      "id": "n2-r8",
+      "objectiveId": "O5",
+      "type": "data-classifier",
+      "title": "Ubicación histórica sin propósito operativo",
+      "scenario": "Una tabla analítica conserva coordenadas GPS precisas de clientes desde hace seis años aunque el servicio ya no utiliza geolocalización.",
+      "recordLabel": "gps_historico_demo: \"[coordenadas antiguas sin uso actual]\"",
+      "correctOptionId": "delete_do_not_store",
+      "exposureDelta": 15,
+      "feedbackByOption": {
+        "hash_password": {
+          "attackerView": "Aplicar hash a datos obsoletos e innecesarios mantiene registros correlacionables sin justificación operativa.",
+          "why": "El hashing de contraseñas no convierte en necesario un dato histórico que carece de finalidad legítima actual.",
+          "correctControl": "Eliminar las coordenadas históricas según la política de retención y dejar de recolectar campos no utilizados."
+        },
+        "authenticated_encryption": {
+          "attackerView": "Cifrar datos que ya no tienen uso sigue ampliando el volumen sensible sujeto a custodia y posible exposición futura.",
+          "why": "El principio de minimización de datos indica que la forma más segura de proteger información innecesaria es no conservarla.",
+          "correctControl": "Purgar los registros históricos de ubicación siguiendo la política de retención aplicable."
+        },
+        "tokenize_minimize": {
+          "attackerView": "Conservar un mapeo tokenizado hacia coordenadas obsoletas mantiene intacta la deuda de privacidad sin aportar valor al negocio.",
+          "why": "Reducir exposición implica eliminar por completo datos sin propósito legítimo en lugar de mantener tablas auxiliares.",
+          "correctControl": "Ejecutar la eliminación segura de los registros de ubicación obsoletos y auditar que no existan copias en respaldos fuera de plazo."
+        },
+        "delete_do_not_store": {
+          "attackerView": "Acumular historial de ubicación sin propósito incrementa el impacto potencial ante una eventual fuga de la base analítica.",
+          "why": "La minimización de datos y las políticas de retención exigen purgar información personal que dejó de ser necesaria para la finalidad declarada.",
+          "correctControl": "Eliminar los campos históricos de ubicación y automatizar vencimientos de retención para evitar acumulación innecesaria."
+        }
+      },
+      "glossaryTermId": "minimizacion-datos",
+      "owaspRef": "https://top10.owasp.org/2025/A04_2025-Cryptographic_Failures/"
+    }
+  ]
+}

@@ -1,0 +1,419 @@
+{
+  "level": 4,
+  "title": "Simulacro de Brecha",
+  "objectiveIds": ["O1", "O2", "O3", "O4", "O5"],
+  "startNodeId": "n4-det-1",
+  "phases": [
+    "Detección",
+    "Contención",
+    "Evaluación",
+    "Protección",
+    "Recuperación",
+    "Cierre"
+  ],
+  "nodes": {
+    "n4-det-1": {
+      "id": "n4-det-1",
+      "phase": "Detección",
+      "title": "Alerta por archivo .env y registros publicados en foro simulado",
+      "scenario": "El equipo de monitoreo reporta la aparición de un archivo .env ficticio de NovaPay y una muestra simulada de registros en un foro externo. Debes realizar el triage inicial de forma segura.",
+      "isTerminal": false,
+      "scorable": true,
+      "options": [
+        {
+          "id": "a",
+          "objectiveId": "O4",
+          "label": "Reenviar el archivo .env íntegro por el chat general interno para confirmar si alguien del equipo reconoce las llaves.",
+          "isCorrect": false,
+          "exposureDelta": 15,
+          "nextNodeId": "n4-con-1",
+          "feedback": {
+            "attackerView": "Propagar secretos posiblemente vigentes por mensajería no controlada amplía el número de copias y actores internos o externos con acceso potencial.",
+            "why": "Un archivo .env no sustituye a un gestor seguro de secretos y redistribuirlo en texto claro durante el triage agrava la exposición.",
+            "correctControl": "Preservar la evidencia en un espacio restringido con registro de acceso y validar metadatos sin copiar los valores secretos en canales abiertos."
+          },
+          "glossaryTermId": "gestion-secretos",
+          "owaspRef": "https://top10.owasp.org/2025/es/A04_2025-Cryptographic_Failures/"
+        },
+        {
+          "id": "b",
+          "objectiveId": "O4",
+          "label": "Verificar la muestra en entorno aislado de respuesta, sin redistribuir secretos en canales abiertos.",
+          "isCorrect": true,
+          "exposureDelta": 0,
+          "nextNodeId": "n4-con-1",
+          "feedback": {
+            "attackerView": "Aunque la publicación ya representa un indicio grave, contener la copia dentro de un canal aislado evita multiplicarla durante la investigación.",
+            "why": "El triage responsable valida la evidencia bajo mínimo privilegio y evita propagar credenciales por correo o chat antes de revocarlas.",
+            "correctControl": "Documentar el hallazgo con identificadores no sensibles, resguardar la evidencia en bóveda de incidentes y pasar de inmediato a contención."
+          },
+          "glossaryTermId": "gestion-secretos",
+          "owaspRef": "https://top10.owasp.org/2025/es/A04_2025-Cryptographic_Failures/"
+        },
+        {
+          "id": "c",
+          "objectiveId": "O4",
+          "label": "Descartar la alerta sin registro porque los respaldos previos estaban cifrados.",
+          "isCorrect": false,
+          "exposureDelta": 25,
+          "nextNodeId": "n4-con-1",
+          "feedback": {
+            "attackerView": "Si un archivo .env contiene credenciales reales o llaves de descifrado, ignorar la alerta dejaría abierto el acceso no autorizado.",
+            "why": "Ocultar o descartar sin verificar impide revocar credenciales expuestas a tiempo y deja sin rastro el incidente.",
+            "correctControl": "Validar la evidencia en un entorno controlado, abrir registro de incidente e iniciar la contención inmediata."
+          },
+          "glossaryTermId": "texto-plano",
+          "owaspRef": "https://top10.owasp.org/2025/A04_2025-Cryptographic_Failures/"
+        }
+      ]
+    },
+    "n4-con-1": {
+      "id": "n4-con-1",
+      "phase": "Contención",
+      "title": "Credenciales y llaves identificadas en la muestra filtrada",
+      "scenario": "El triage confirma que la muestra contiene credenciales de un servicio de staging y una llave maestra antigua. ¿Qué acción de contención priorizas?",
+      "isTerminal": false,
+      "scorable": true,
+      "options": [
+        {
+          "id": "a",
+          "objectiveId": "O4",
+          "label": "Revocar y rotar de inmediato credenciales y llaves en el gestor de secretos, restringiendo accesos.",
+          "isCorrect": true,
+          "exposureDelta": 0,
+          "nextNodeId": "n4-eva-1",
+          "feedback": {
+            "attackerView": "Si no se invalidan las credenciales filtradas, quien posea el .env podría reutilizarlas para acceder a servicios o descifrar copias antiguas.",
+            "why": "Un secreto expuesto no se corrige ocultando el archivo; requiere revocación inmediata, rotación en un gestor seguro de secretos y restricción de acceso.",
+            "correctControl": "Invalidar las llaves comprometidas, emitir reemplazos desde el gestor de secretos con mínimo privilegio y auditar sesiones activas."
+          },
+          "glossaryTermId": "gestion-secretos",
+          "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"
+        },
+        {
+          "id": "b",
+          "objectiveId": "O4",
+          "label": "Cambiar el repositorio a privado y borrar el último commit sin rotar las credenciales expuestas en código.",
+          "isCorrect": false,
+          "exposureDelta": 25,
+          "nextNodeId": "n4-eva-1",
+          "feedback": {
+            "attackerView": "Quien ya obtuvo el archivo .env antes del cambio de visibilidad conservaría credenciales plenamente válidas.",
+            "why": "Ocultar el repositorio o eliminar un commit no invalida secretos ya copiados; además, un .env o variable de entorno simple carece de rotación controlada.",
+            "correctControl": "Revocar y rotar todas las credenciales afectadas en un gestor de secretos, depurar el historial y revisar accesos previos."
+          },
+          "glossaryTermId": "gestion-secretos",
+          "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"
+        },
+        {
+          "id": "c",
+          "objectiveId": "O4",
+          "label": "Programar la rotación para el próximo trimestre con el fin de evitar cambios urgentes de configuración.",
+          "isCorrect": false,
+          "exposureDelta": 20,
+          "nextNodeId": "n4-eva-1",
+          "feedback": {
+            "attackerView": "Cada hora sin revocar las credenciales filtradas mantiene abierta una ventana de uso indebido contra la infraestructura de NovaPay.",
+            "why": "Retrasar la rotación sin justificación técnica ante exposición confirmada prolonga el riesgo innecesariamente.",
+            "correctControl": "Ejecutar rotación de emergencia mediante el gestor de secretos y suspender credenciales antiguas de forma inmediata."
+          },
+          "glossaryTermId": "gestion-secretos",
+          "owaspRef": "https://top10.owasp.org/2025/A04_2025-Cryptographic_Failures/"
+        }
+      ]
+    },
+    "n4-eva-1": {
+      "id": "n4-eva-1",
+      "phase": "Evaluación",
+      "title": "Inventario de impacto sobre datos y servicios",
+      "scenario": "Tras revocar las credenciales expuestas, necesitas determinar qué datos personales o de pago estuvieron al alcance y cómo deben tratarse los registros afectados.",
+      "isTerminal": false,
+      "scorable": true,
+      "options": [
+        {
+          "id": "a",
+          "objectiveId": "O2",
+          "label": "Aplicar hash al PAN en toda la plataforma y presentarlo como reemplazo completo de todos los controles PCI DSS.",
+          "isCorrect": false,
+          "exposureDelta": 15,
+          "nextNodeId": "n4-pro-1",
+          "feedback": {
+            "attackerView": "El espacio numérico de un PAN tiene formato acotado y prefijos conocidos, por lo que un hash sin controles adicionales puede ser vulnerable a búsqueda exhaustiva.",
+            "why": "Ni el hash ni la tokenización reemplazan por sí solos todo el conjunto de requisitos de PCI DSS, ni resuelven la evaluación de accesos previos.",
+            "correctControl": "Inventariar qué servicios y tablas accedieron a datos sensibles, evaluar bitácoras y aplicar tokenización o minimización dentro de PCI DSS."
+          },
+          "glossaryTermId": "tokenizacion",
+          "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"
+        },
+        {
+          "id": "b",
+          "objectiveId": "O2",
+          "label": "Guardar copia cifrada del CVV de clientes afectados para futuras auditorías.",
+          "isCorrect": false,
+          "exposureDelta": 25,
+          "nextNodeId": "n4-pro-1",
+          "feedback": {
+            "attackerView": "Conservar códigos CVV post-autorización crea un objetivo de altísimo impacto que jamás debería existir en reposo.",
+            "why": "PAN y CVV deben tratarse por separado: PCI DSS prohíbe conservar el CVV después de la autorización, incluso cifrado.",
+            "correctControl": "Verificar que ningún proceso retenga CVV tras la autorización, purgar cualquier rastro en logs o tablas y delimitar el alcance real."
+          },
+          "glossaryTermId": "minimizacion-datos",
+          "owaspRef": "https://www.pcisecuritystandards.org/faqs/are-merchants-allowed-to-request-card-verification-codes-values-from-cardholders/"
+        },
+        {
+          "id": "c",
+          "objectiveId": "O2",
+          "label": "Inventariar dependencias de llaves, registros afectados, bitácoras y confirmar ausencia de CVV.",
+          "isCorrect": true,
+          "exposureDelta": 0,
+          "nextNodeId": "n4-pro-1",
+          "feedback": {
+            "attackerView": "Sin un inventario preciso de llaves y registros expuestos, podrían quedar servicios secundarios o respaldos usando secretos comprometidos.",
+            "why": "Evaluar impacto exige mapear dependencias reales, revisar registros de acceso y comprobar principios de minimización y prohibición de CVV.",
+            "correctControl": "Documentar servicios dependientes, alcance exacto de datos afectados y brechas de control para corregirlos en la fase de protección."
+          },
+          "glossaryTermId": "minimizacion-datos",
+          "owaspRef": "https://top10.owasp.org/2025/A04_2025-Cryptographic_Failures/"
+        }
+      ]
+    },
+    "n4-pro-1": {
+      "id": "n4-pro-1",
+      "phase": "Protección",
+      "title": "Re-cifrado y corrección de controles de almacenamiento",
+      "scenario": "El inventario detecta registros fiscales cifrados con una llave antigua asociada al incidente y un módulo auxiliar que aún usaba un modo determinista.",
+      "isTerminal": false,
+      "scorable": true,
+      "options": [
+        {
+          "id": "a",
+          "objectiveId": "O3",
+          "label": "Re-cifrar los registros con la misma llave anterior cambiando solo el nombre del archivo para mantener compatibilidad.",
+          "isCorrect": false,
+          "exposureDelta": 20,
+          "nextNodeId": "n4-rec-1",
+          "feedback": {
+            "attackerView": "Quien haya copiado la llave comprometida seguiría pudiendo descifrar todos los registros supuestamente re-cifrados.",
+            "why": "Reutilizar una clave filtrada anula la recuperación criptográfica y mantiene los datos expuestos.",
+            "correctControl": "Generar nuevas llaves en un gestor seguro/KMS y re-cifrar los datos necesarios con AES-GCM y nonce único."
+          },
+          "glossaryTermId": "aes-gcm",
+          "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"
+        },
+        {
+          "id": "b",
+          "objectiveId": "O3",
+          "label": "Emitir claves nuevas desde KMS y re-cifrar datos con AES-GCM y nonce único por clave, retirando modos débiles.",
+          "isCorrect": true,
+          "exposureDelta": 0,
+          "nextNodeId": "n4-rec-1",
+          "feedback": {
+            "attackerView": "Con llaves nuevas y AES-GCM bien implementado, las llaves filtradas dejan de servir para futuros registros y cualquier manipulación es detectada.",
+            "why": "El re-cifrado efectivo requiere rotar a llaves nuevas e independientes y garantizar que AES-GCM nunca reutilice un nonce con la misma clave.",
+            "correctControl": "Completar la migración a llaves nuevas en KMS, verificar la unicidad del nonce en AES-GCM y eliminar esquemas deterministas como ECB."
+          },
+          "glossaryTermId": "nonce-iv",
+          "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"
+        },
+        {
+          "id": "c",
+          "objectiveId": "O3",
+          "label": "Migrar temporalmente todos los datos afectados a AES-ECB sin nonce para simplificar y acelerar el despliegue.",
+          "isCorrect": false,
+          "exposureDelta": 25,
+          "nextNodeId": "n4-rec-1",
+          "feedback": {
+            "attackerView": "AES-ECB filtra patrones entre bloques idénticos y no provee autenticación de integridad frente a alteraciones.",
+            "why": "Eliminar la gestión de nonces pasando a ECB sustituye un problema operativo por una falla criptográfica grave de confidencialidad e integridad.",
+            "correctControl": "Utilizar cifrado autenticado AES-GCM con generación segura de nonce único por clave administrada en KMS."
+          },
+          "glossaryTermId": "aes-ecb",
+          "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html"
+        }
+      ]
+    },
+    "n4-rec-1": {
+      "id": "n4-rec-1",
+      "phase": "Recuperación",
+      "title": "Restauración controlada de servicios externos",
+      "scenario": "Los servicios de NovaPay están listos para reanudar operaciones. Debes validar las condiciones de transporte y monitoreo antes de abrir tráfico.",
+      "isTerminal": false,
+      "scorable": true,
+      "options": [
+        {
+          "id": "a",
+          "objectiveId": "O1",
+          "label": "Restaurar bajo TLS 1.3/1.2 moderno, HSTS activo, validación estricta de certificados y monitoreo continuo.",
+          "isCorrect": true,
+          "exposureDelta": 0,
+          "nextNodeId": "n4-cie-1",
+          "feedback": {
+            "attackerView": "Sin transporte endurecido y monitoreo, una degradación de protocolo o anomalía tras la reapertura podría pasar inadvertida.",
+            "why": "La recuperación segura verifica tanto el cifrado moderno en tránsito (TLS 1.2/1.3, certificados confiables y HSTS para visitas posteriores) como la observabilidad.",
+            "correctControl": "Mantener TLS vigente, certificados con cadena confiable y renovación automática, HSTS activo y alertas sobre intentos fallidos."
+          },
+          "glossaryTermId": "tls",
+          "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html"
+        },
+        {
+          "id": "b",
+          "objectiveId": "O1",
+          "label": "Habilitar el portal por HTTP sin HSTS mientras se estabilizan clientes internos antiguos.",
+          "isCorrect": false,
+          "exposureDelta": 20,
+          "nextNodeId": "n4-cie-1",
+          "feedback": {
+            "attackerView": "Reabrir tráfico sensible en HTTP plano expone sesiones y credenciales recién rotadas a observación o modificación en ruta.",
+            "why": "Aunque la falta de HSTS no demuestra por sí sola una interceptación, degradar a HTTP tras un incidente introduce un riesgo innecesario de exposición en tránsito.",
+            "correctControl": "Exigir HTTPS con TLS moderno desde la reapertura, configurar redirección segura y emitir HSTS."
+          },
+          "glossaryTermId": "hsts",
+          "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html"
+        },
+        {
+          "id": "c",
+          "objectiveId": "O1",
+          "label": "Desactivar temporalmente la verificación de certificados TLS entre microservicios para acelerar la reconexión.",
+          "isCorrect": false,
+          "exposureDelta": 25,
+          "nextNodeId": "n4-cie-1",
+          "feedback": {
+            "attackerView": "Omitir la validación de certificados permite que cualquier servicio no autenticado suplante un endpoint interno durante la recuperación.",
+            "why": "La seguridad del canal depende de verificar una cadena de confianza válida en el entorno cliente; desactivarla anula la autenticación de TLS.",
+            "correctControl": "Corregir o emitir certificados válidos para la cadena de confianza del entorno antes de restaurar la comunicación."
+          },
+          "glossaryTermId": "certificado-digital",
+          "owaspRef": "https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html"
+        }
+      ]
+    },
+    "n4-cie-1": {
+      "id": "n4-cie-1",
+      "phase": "Cierre",
+      "title": "Comunicación, informe post-incidente y controles preventivos",
+      "scenario": "Los sistemas operan con normalidad y las llaves comprometidas fueron rotadas. Solo resta ejecutar el cierre formal del incidente.",
+      "isTerminal": false,
+      "scorable": true,
+      "options": [
+        {
+          "id": "a",
+          "objectiveId": "O5",
+          "label": "Publicar el volcado completo con las muestras originales sin sanitizar en un boletín público para demostrar transparencia.",
+          "isCorrect": false,
+          "exposureDelta": 20,
+          "nextNodeId": "n4-cie-fix",
+          "feedback": {
+            "attackerView": "Difundir evidencias sin sanitizar puede exponer datos residuales, configuraciones internas o detalles explotables a terceros.",
+            "why": "La transparencia responsable informa impacto, acciones y recomendaciones sin divulgar secretos ni registros sensibles.",
+            "correctControl": "Sanitizar el informe antes de distribuirlo y corregir el cierre documentando controles preventivos verificables."
+          },
+          "glossaryTermId": "minimizacion-datos",
+          "owaspRef": "https://top10.owasp.org/2025/es/A04_2025-Cryptographic_Failures/"
+        },
+        {
+          "id": "b",
+          "objectiveId": "O5",
+          "label": "Dar por terminado el incidente sin informe ni notificación, ya que las llaves fueron cambiadas.",
+          "isCorrect": false,
+          "exposureDelta": 20,
+          "nextNodeId": "n4-cie-fix",
+          "feedback": {
+            "attackerView": "Sin lecciones aprendidas ni controles automáticos en el repositorio, el equipo podría repetir la subida accidental de archivos .env.",
+            "why": "Omitir el informe de cierre y las notificaciones aplicables impide aprender del incidente y rompe obligaciones de rendición de cuentas.",
+            "correctControl": "Elaborar el cierre formal con cronología, notificaciones pertinentes y controles preventivos en el flujo de desarrollo."
+          },
+          "glossaryTermId": "gestion-secretos",
+          "owaspRef": "https://top10.owasp.org/2025/es/A04_2025-Cryptographic_Failures/"
+        },
+        {
+          "id": "c",
+          "objectiveId": "O5",
+          "label": "Documentar cronología y lecciones aprendidas, notificar según obligaciones e implantar escaneo de secretos en CI.",
+          "isCorrect": true,
+          "exposureDelta": 0,
+          "nextNodeId": "n4-end-ok",
+          "feedback": {
+            "attackerView": "Automatizar la detección previa al commit y la gestión centralizada reduce drásticamente la probabilidad de futuras fugas similares.",
+            "why": "Un cierre proporcionado equilibra documentación técnica sanitizada, cumplimiento de notificación y mejoras estructurales verificables.",
+            "correctControl": "Mantener pruebas automáticas anti-secretos en CI, revisiones periódicas de llaves y simulacros regulares de respuesta."
+          },
+          "glossaryTermId": "gestion-secretos",
+          "owaspRef": "https://top10.owasp.org/2025/es/A04_2025-Cryptographic_Failures/"
+        }
+      ]
+    },
+    "n4-cie-fix": {
+      "id": "n4-cie-fix",
+      "phase": "Cierre",
+      "title": "Corrección previa al cierre formal",
+      "scenario": "La auditoría interna observa fallas en la propuesta de cierre inicial y solicita rectificar el procedimiento antes de archivar el incidente.",
+      "isTerminal": false,
+      "scorable": true,
+      "options": [
+        {
+          "id": "a",
+          "objectiveId": "O5",
+          "label": "Archivar el caso tal como está sin agregar controles preventivos para no retrasar las entregas del sprint.",
+          "isCorrect": false,
+          "exposureDelta": 20,
+          "nextNodeId": "n4-end-obs",
+          "feedback": {
+            "attackerView": "Dejar el flujo sin escaneo de secretos ni reglas de retención facilita que vuelva a ocurrir una exposición equivalente.",
+            "why": "El cierre sin corrección deja abierta la causa raíz organizativa y técnica del incidente.",
+            "correctControl": "Completar el informe sanitizado, cumplir con las notificaciones aplicables e implantar prevención automatizada."
+          },
+          "glossaryTermId": "minimizacion-datos",
+          "owaspRef": "https://top10.owasp.org/2025/es/A04_2025-Cryptographic_Failures/"
+        },
+        {
+          "id": "b",
+          "objectiveId": "O5",
+          "label": "Sanitizar evidencias, emitir el informe con notificaciones y activar bloqueo preventivo en CI.",
+          "isCorrect": true,
+          "exposureDelta": 0,
+          "nextNodeId": "n4-end-obs",
+          "feedback": {
+            "attackerView": "Corregir el cierre a tiempo evita nuevas filtraciones de evidencias y cierra la causa raíz en el repositorio.",
+            "why": "Rectificar antes del cierre definitivo permite cumplir con la comunicación responsable y dejar controles preventivos activos, aunque quede registro de la observación previa.",
+            "correctControl": "Verificar periódicamente el escaneo de secretos en CI, la vigencia de llaves en KMS y las políticas de retención."
+          },
+          "glossaryTermId": "gestion-secretos",
+          "owaspRef": "https://top10.owasp.org/2025/es/A04_2025-Cryptographic_Failures/"
+        },
+        {
+          "id": "c",
+          "objectiveId": "O5",
+          "label": "Adjuntar las capturas completas con valores originales dentro del reporte abierto a toda la organización.",
+          "isCorrect": false,
+          "exposureDelta": 25,
+          "nextNodeId": "n4-end-obs",
+          "feedback": {
+            "attackerView": "Incluir valores originales o datos personales en reportes amplios reproduce innecesariamente información sensible.",
+            "why": "Los informes post-incidente deben aplicar minimización de datos y redactar o anonimizar cualquier evidencia sensible.",
+            "correctControl": "Reemplazar evidencias sensibles por marcadores redactados y limitar el acceso al expediente técnico completo."
+          },
+          "glossaryTermId": "minimizacion-datos",
+          "owaspRef": "https://top10.owasp.org/2025/es/A04_2025-Cryptographic_Failures/"
+        }
+      ]
+    },
+    "n4-end-ok": {
+      "id": "n4-end-ok",
+      "phase": "Cierre",
+      "title": "Incidente contenido y cerrado sin observaciones",
+      "scenario": "Completaste las seis fases de respuesta ante el incidente simulado de NovaPay con contención oportuna, re-cifrado válido, transporte endurecido y cierre formal completo.",
+      "isTerminal": true,
+      "outcomeType": "success",
+      "scorable": false
+    },
+    "n4-end-obs": {
+      "id": "n4-end-obs",
+      "phase": "Cierre",
+      "title": "Incidente cerrado con observaciones de auditoría",
+      "scenario": "El incidente simulado fue contenido y los servicios quedaron protegidos, pero el expediente registra observaciones durante la fase de cierre que requieren seguimiento en auditorías futuras.",
+      "isTerminal": true,
+      "outcomeType": "observations",
+      "scorable": false
+    }
+  }
+}

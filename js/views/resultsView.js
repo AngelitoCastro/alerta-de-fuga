@@ -128,17 +128,40 @@ export function renderResultsView(
   const section = createEl(doc, 'section', 'view-results');
   section.setAttribute('aria-labelledby', 'results-title');
 
-  // Resumen principal y rango
-  const summaryCard = createEl(doc, 'article', 'card results-summary');
+  // Cierre cinematográfico de misión con ilustración local y estadísticas reales del motor
+  const summaryBanner = createEl(doc, 'article', 'results-hero-banner');
+
+  const mediaWrap = createEl(doc, 'div', 'results-hero-media');
+  const victoryImg = createEl(doc, 'img', 'results-hero-img');
+  victoryImg.setAttribute('src', 'assets/victory-cover.webp');
+  victoryImg.setAttribute(
+    'alt',
+    'Equipo forense de NovaPay verificando la restauración segura del acceso frente a la bahía de Costa Esmeralda'
+  );
+  victoryImg.setAttribute('width', '1280');
+  victoryImg.setAttribute('height', '714');
+  victoryImg.setAttribute('loading', 'lazy');
+  mediaWrap.appendChild(victoryImg);
+
+  const summaryCard = createEl(doc, 'div', 'results-hero-copy results-summary');
+  summaryCard.appendChild(
+    createEl(doc, 'span', 'mission-kicker', 'CIERRE DE OPERACIÓN CONTENER LA FUGA · NOVAPAY')
+  );
   const h1 = createEl(doc, 'h1', '', 'Resultados de la auditoría NovaPay');
   h1.id = 'results-title';
 
-  const rankBadge = createEl(doc, 'div', 'rank-badge', `Rango obtenido: ${summary.rank}`);
+  const totalMistakes = OBJECTIVES.reduce((sum, id) => sum + objectiveReview[id].mistakes.length, 0);
+  const missionOutcomeText = totalMistakes === 0
+    ? 'Completaste las cuatro fases sin brechas pendientes registradas en el intento aceptado y el test posterior.'
+    : `Completaste las cuatro fases de la operación. Tienes ${totalMistakes} punto${totalMistakes === 1 ? '' : 's'} clave para repasar en la guía inferior antes de un nuevo intento.`;
+  const missionSummaryP = createEl(doc, 'p', 'lead', missionOutcomeText);
+
+  const rankBadge = createEl(doc, 'div', 'rank-badge', `Rango interno obtenido: ${summary.rank}`);
   const disclaimer = createEl(
     doc,
     'p',
     'text-muted',
-    'Nota de diseño: este rango describe tu desempeño dentro del juego y no certifica una competencia profesional.'
+    'Logro interno del juego: este rango resume tu desempeño dentro de Alerta de Fuga y no otorga una certificación profesional real.'
   );
 
   const breakdownGrid = createEl(doc, 'div', 'score-breakdown');
@@ -160,8 +183,9 @@ export function renderResultsView(
     breakdownGrid.appendChild(stat);
   }
 
-  summaryCard.append(h1, rankBadge, disclaimer, breakdownGrid);
-  section.appendChild(summaryCard);
+  summaryCard.append(h1, missionSummaryP, rankBadge, disclaimer, breakdownGrid);
+  summaryBanner.append(mediaWrap, summaryCard);
+  section.appendChild(summaryBanner);
 
   // Tarjetas paralelas: comparación de tests + guía de repaso por objetivo
   const resultsGrid = createEl(doc, 'div', 'results-grid');

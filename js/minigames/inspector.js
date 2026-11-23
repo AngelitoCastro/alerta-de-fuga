@@ -22,10 +22,38 @@ function formatHeaders(headers) {
   return entries.map(([key, value]) => `${key}: ${String(value)}`).join('\n');
 }
 
+function getHstsStatus(headers) {
+  if (!headers || typeof headers !== 'object') {
+    return 'Ausente';
+  }
+  const key = Object.keys(headers).find((k) => k.toLowerCase() === 'strict-transport-security');
+  if (!key || !String(headers[key]).trim()) {
+    return 'Ausente';
+  }
+  return /preload/i.test(String(headers[key])) ? 'Presente (con preload)' : 'Presente';
+}
+
+function getSchemeLabel(url, protocol) {
+  const raw = String(url || '');
+  if (/^https:\/\//i.test(raw)) return `HTTPS (${protocol || 'HTTP'})`;
+  if (/^http:\/\//i.test(raw)) return `HTTP (${protocol || 'HTTP'})`;
+  return String(protocol || 'No especificado');
+}
+
+function createEvidenceChip(doc, label, value) {
+  const chip = createEl(doc, 'span', 'evidence-chip');
+  chip.append(
+    createEl(doc, 'span', 'evidence-chip-key', `${label}:`),
+    createEl(doc, 'span', '', String(value))
+  );
+  return chip;
+}
+
 function getOptionButtonVariant(optionId) {
-  if (optionId === 'allow') return 'btn btn--secondary';
-  if (optionId === 'require_https') return 'btn btn--primary';
-  if (optionId === 'block') return 'btn btn--danger';
+  // Neutralidad visual antes de decidir: no destacar una acción por color antes del veredicto
+  if (optionId === 'allow' || optionId === 'require_https' || optionId === 'block') {
+    return 'btn btn--secondary';
+  }
   return 'btn btn--secondary';
 }
 
@@ -103,11 +131,21 @@ export function mount(container, levelData, callbacks = {}) {
 
     const challenge = challenges[session.currentIndex];
     const req = challenge.requestDetails || {};
+    const hstsStatus = getHstsStatus(req.headers);
+
+    if (typeof callbacks.onProgress === 'function') {
+      callbacks.onProgress({
+        current: session.currentIndex + 1,
+        total: challenges.length,
+        label: `Solicitud ${session.currentIndex + 1}/${challenges.length}`
+      });
+    }
+
     const wrapper = createEl(doc, 'div', 'inspector-layout');
 
     const progressBar = createEl(doc, 'div', 'inspector-progress');
     progressBar.append(
-      createEl(doc, 'span', '', `Solicitud ${session.currentIndex + 1} de ${challenges.length}`),
+      createEl(doc, 'span', '', `Solicitud ${session.currentIndex + 1} de ${challenges.length} · Evalúa la evidencia antes de decidir`),
       createEl(doc, 'span', 'badge badge--info', `Objetivo ${challenge.objectiveId}`)
     );
     wrapper.appendChild(progressBar);
@@ -127,28 +165,52 @@ export function mount(container, levelData, callbacks = {}) {
     );
     card.appendChild(headerRow);
 
-    const metaList = createEl(doc, 'dl', 'packet-meta-grid');
-    const metaFields = [
-      ['Protocolo', req.protocol || 'No especificado'],
-      ['Versión TLS / Cifrado', req.tlsVersion || 'No especificado'],
-      ['Estado del certificado', req.certificateStatus || 'No especificado']
-    ];
-    for (const [labelText, valueText] of metaFields) {
-      const item = createEl(doc, 'div', 'packet-meta-item');
-      item.append(
-        createEl(doc, 'dt', 'packet-meta-label', labelText),
-        createEl(doc, 'dd', 'packet-meta-value', String(valueText))
-      );
-      metaList.appendChild(item);
-    }
-    card.appendChild(metaList);
+    // Visualizador animado del túnel de red (neutral: no adelanta veredicto)
+    const tunnelStage = createEl(doc, 'div', 'tunnel-stage');
+    tunnelStage.setAttribute('aria-hidden', 'true');
+
+    const clientNode = createEl(doc, 'div', 'tunnel-endpoint');
+    clientNode.append(
+      createEl(doc, 'span', 'tunnel-endpoint-icon', '[PC]'),
+      createEl(doc, 'span', 'tunnel-endpoint-name', 'Cliente')
+    );
+
+    const conduit = createEl(doc, 'div', 'tunnel-conduit');
+    conduit.append(
+      createEl(doc, 'span', 'tunnel-packet-pill', `${String(req.method || 'GET')} · ${getSchemeLabel(req.url, req.protocol)}`),
+      createEl(doc, 'div', 'tunnel-wire')
+    );
+
+    const serverNode = createEl(doc, 'div', 'tunnel-endpoint');
+    serverNode.append(
+      createEl(doc, 'span', 'tunnel-endpoint-icon', '[SRV]'),
+      createEl(doc, 'span', 'tunnel-endpoint-name', 'NovaPay')
+    );
+
+    tunnelStage.append(clientNode, conduit, serverNode);
+    card.appendChild(tunnelStage);
+
+    // Evidencia visual neutral (sin colores de veredicto antes de responder)
+    const telemetryStrip = createEl(doc, 'div', 'evidence-strip');
+    telemetryStrip.setAttribute('aria-label', 'Resumen neutral de parámetros de transporte');
+    telemetryStrip.append(
+      createEvidenceChip(doc, 'Canal', getSchemeLabel(req.url, req.protocol)),
+      createEvidenceChip(doc, 'TLS', req.tlsVersion || 'No especificado'),
+      createEvidenceChip(doc, 'Certificado', req.certificateStatus || 'No especificado'),
+      createEvidenceChip(doc, 'HSTS', hstsStatus)
+    );
+    card.appendChild(telemetryStrip);
+
+    const rawDetails = createEl(doc, 'details', 'packet-raw-details');
+    rawDetails.open = true;
+    const rawSummary = createEl(doc, 'summary', 'packet-raw-summary', 'Detalle de cabeceras y carga simulada');
+    const rawBody = createEl(doc, 'div', 'packet-raw-body');
 
     const headersSection = createEl(doc, 'div', 'packet-headers');
     headersSection.append(
       createEl(doc, 'h3', '', 'Cabeceras simuladas'),
       createEl(doc, 'pre', '', formatHeaders(req.headers))
     );
-    card.appendChild(headersSection);
 
     const payloadSection = createEl(doc, 'div', 'packet-payload');
     const payloadText = typeof req.payloadPreview === 'string' && req.payloadPreview.trim().length > 0
@@ -158,7 +220,10 @@ export function mount(container, levelData, callbacks = {}) {
       createEl(doc, 'h3', '', 'Vista previa de carga simulada'),
       createEl(doc, 'pre', '', payloadText)
     );
-    card.appendChild(payloadSection);
+
+    rawBody.append(headersSection, payloadSection);
+    rawDetails.append(rawSummary, rawBody);
+    card.appendChild(rawDetails);
 
     wrapper.appendChild(card);
 

@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Alerta de Fuga: juego educativo interactivo sobre fallas criptográficas (OWASP Top 10:2025 A04) para auditar sistemas simulados de NovaPay.">
+  <meta name="description" content="Alerta de Fuga: juego educativo interactivo sobre fallas criptográficas (OWASP Top 10:2025 A04) para contener una filtración simulada en NovaPay.">
   <title>Alerta de Fuga — Auditoría Criptográfica (OWASP A04:2025)</title>
   <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
-  <link rel="stylesheet" href="css/tokens.css">
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/layout.css">
-  <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/minigames.css">
+  <link rel="stylesheet" href="css/tokens.css?v=4">
+  <link rel="stylesheet" href="css/base.css?v=4">
+  <link rel="stylesheet" href="css/layout.css?v=4">
+  <link rel="stylesheet" href="css/components.css?v=4">
+  <link rel="stylesheet" href="css/minigames.css?v=4">
 </head>
 <body>
   <a class="skip-link" href="#main-content">Saltar al contenido</a>
@@ -21,12 +21,13 @@
         <img src="assets/logo.svg" alt="" width="40" height="40" class="brand-logo" aria-hidden="true">
         <div class="brand-text">
           <span class="brand-title">Alerta de Fuga</span>
-          <span class="brand-subtitle">Auditoría criptográfica NovaPay (OWASP A04:2025)</span>
+          <span class="brand-subtitle">Unidad Forense · NovaPay (OWASP A04:2025)</span>
         </div>
       </div>
 
       <nav class="site-nav" aria-label="Navegación principal">
         <button type="button" id="nav-home-btn" class="btn btn--ghost nav-btn">Inicio</button>
+        <button type="button" id="toggle-sound-btn" class="btn btn--ghost nav-btn" aria-pressed="false" aria-label="Activar sonido de efectos">Activar sonido</button>
         <button type="button" id="open-glossary-btn" class="btn btn--secondary nav-btn" aria-haspopup="dialog" aria-controls="glossary-drawer">Glosario</button>
         <button type="button" id="open-settings-btn" class="btn btn--secondary nav-btn" aria-haspopup="dialog" aria-controls="settings-modal">Ajustes</button>
       </nav>
@@ -35,19 +36,28 @@
 
   <main id="main-content" class="site-main" tabindex="-1">
     <section class="view-home" aria-labelledby="fallback-title">
-      <div class="hero-grid">
-        <div class="hero-copy card">
-          <h1 id="fallback-title">Auditoría criptográfica de NovaPay</h1>
-          <p class="lead">Detecta configuraciones de transporte inseguras, protege datos sensibles en reposo, localiza secretos expuestos y contiene una brecha simulada.</p>
-          <p class="text-muted">Inicializando la consola interactiva de entrenamiento para OWASP Top 10:2025 A04.</p>
+      <div class="hero-cinema">
+        <div class="hero-cinema-media">
+          <img
+            src="assets/hero-cover.webp"
+            srcset="assets/hero-cover-mobile.webp 640w, assets/hero-cover.webp 1280w"
+            sizes="(max-width: 767px) 100vw, 1280px"
+            alt="Analistas forenses de NovaPay supervisando alertas criptográficas frente a la ciudad costera de Costa Esmeralda al atardecer"
+            width="1280"
+            height="714"
+            class="hero-cinema-img"
+          >
+          <div class="hero-cinema-scrim" aria-hidden="true"></div>
+        </div>
+        <div class="hero-cinema-content">
+          <h1 id="fallback-title" class="hero-brand-title">Alerta de Fuga</h1>
+          <p class="lead">La información está en riesgo. Tu misión es contener la fuga en los sistemas simulados de NovaPay.</p>
+          <p class="text-muted">Inicializando la consola forense interactiva para OWASP Top 10:2025 A04.</p>
           <noscript>
             <div class="alert alert--warning noscript-notice" role="status">
               <p><strong>JavaScript requerido:</strong> activa JavaScript en tu navegador y accede mediante un servidor HTTP local para ejecutar los cuatro niveles interactivos.</p>
             </div>
           </noscript>
-        </div>
-        <div class="hero-visual card">
-          <img src="assets/analyst.svg" alt="Consola de análisis criptográfico de NovaPay con tráfico verificado" width="320" height="240" class="hero-illustration">
         </div>
       </div>
     </section>
@@ -55,7 +65,7 @@
 
   <footer class="site-footer">
     <div class="site-footer-inner">
-      <p>NovaPay es un entorno educativo ficticio sobre fallas criptográficas (OWASP Top 10:2025 A04). Los registros, fragmentos de código y credenciales mostrados son simulaciones no ejecutables y no contienen datos reales.</p>
+      <p>NovaPay y Costa Esmeralda son un entorno educativo ficticio sobre fallas criptográficas (OWASP Top 10:2025 A04). Los registros, fragmentos de código y credenciales mostrados son simulaciones no ejecutables y no contienen datos reales.</p>
     </div>
   </footer>
 
@@ -65,6 +75,6 @@
   <div id="settings-modal" class="modal-backdrop" aria-modal="true" aria-label="Ajustes" hidden></div>
   <div id="guide-modal" class="modal-backdrop" aria-modal="true" aria-label="Guía rápida" hidden></div>
 
-  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/main.js?v=4"></script>
 </body>
 </html>

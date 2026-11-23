@@ -1,4 +1,5 @@
 import { openModal, closeModal, announce, syncReducedMotion } from '../engine/a11y.js';
+import { isSoundEnabled, setSoundEnabled, subscribeSound } from '../engine/sound.js';
 
 function createEl(doc, tag, className = '', text = '') {
   const el = doc.createElement(tag);
@@ -28,10 +29,12 @@ export function createSettingsModal({ container, store, onResetComplete }) {
 
   let timerToggle = null;
   let motionToggle = null;
+  let soundToggle = null;
   let memNotice = null;
   let confirmBox = null;
   let confirmBtn = null;
   let resetBtn = null;
+  let unsubSound = null;
 
   function clearListeners() {
     for (const cleanup of cleanups) {
@@ -60,6 +63,13 @@ export function createSettingsModal({ container, store, onResetComplete }) {
     motionToggle.textContent = motionOn ? 'Activado' : 'Desactivado';
     motionToggle.className = `btn toggle-btn ${motionOn ? 'btn--primary' : 'btn--secondary'}`;
     motionToggle.setAttribute('aria-pressed', motionOn ? 'true' : 'false');
+
+    if (soundToggle) {
+      const soundOn = isSoundEnabled();
+      soundToggle.textContent = soundOn ? 'Activado' : 'Desactivado';
+      soundToggle.className = `btn toggle-btn ${soundOn ? 'btn--primary' : 'btn--secondary'}`;
+      soundToggle.setAttribute('aria-pressed', soundOn ? 'true' : 'false');
+    }
 
     memNotice.hidden = !store.isMemoryFallback();
     confirmBox.hidden = !confirmingReset;
@@ -123,6 +133,23 @@ export function createSettingsModal({ container, store, onResetComplete }) {
     motionToggle.setAttribute('aria-label', 'Alternar animaciones reducidas');
     motionRow.append(motionInfo, motionToggle);
 
+    // Sonido opcional (desactivado por defecto)
+    const soundRow = createEl(doc, 'div', 'toggle-row');
+    const soundInfo = createEl(doc, 'div', 'toggle-info');
+    soundInfo.append(
+      createEl(doc, 'strong', '', 'Sonido de efectos'),
+      createEl(
+        doc,
+        'p',
+        'text-muted',
+        'Desactivado por defecto. Al activarlo reproduce señales breves de acierto, error y nivel completado usando Web Audio API local.'
+      )
+    );
+    soundToggle = createEl(doc, 'button', 'btn toggle-btn btn--secondary', 'Desactivado');
+    soundToggle.type = 'button';
+    soundToggle.setAttribute('aria-label', 'Activar o silenciar sonido de efectos');
+    soundRow.append(soundInfo, soundToggle);
+
     memNotice = createEl(
       doc,
       'div',
@@ -169,7 +196,7 @@ export function createSettingsModal({ container, store, onResetComplete }) {
     confirmActions.append(confirmBtn, cancelBtn);
     confirmBox.appendChild(confirmActions);
 
-    settingsList.append(timerRow, motionRow, memNotice, resetSection, confirmBox);
+    settingsList.append(timerRow, motionRow, soundRow, memNotice, resetSection, confirmBox);
     body.appendChild(settingsList);
 
     const footer = createEl(doc, 'div', 'modal-footer');
@@ -208,6 +235,17 @@ export function createSettingsModal({ container, store, onResetComplete }) {
       announce(next ? 'Animaciones reducidas activadas.' : 'Animaciones reducidas desactivadas.');
       syncUi();
     });
+
+    listen(soundToggle, 'click', () => {
+      const next = !isSoundEnabled();
+      setSoundEnabled(next);
+      announce(next ? 'Sonido de efectos activado.' : 'Sonido de efectos silenciado.');
+      syncUi();
+    });
+
+    if (!unsubSound) {
+      unsubSound = subscribeSound(() => syncUi());
+    }
 
     listen(resetBtn, 'click', () => {
       confirmingReset = true;
@@ -260,6 +298,10 @@ export function createSettingsModal({ container, store, onResetComplete }) {
     },
     destroy() {
       clearListeners();
+      if (unsubSound) {
+        unsubSound();
+        unsubSound = null;
+      }
       confirmingReset = false;
       shellMounted = false;
       container.removeAttribute('role');

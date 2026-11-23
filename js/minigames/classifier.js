@@ -18,6 +18,36 @@ function getVisualDescription(challenge) {
   return `Ilustración educativa del registro simulado: ${challenge.title}`;
 }
 
+function getRecordCategoryTag(challenge) {
+  const text = `${challenge.title} ${challenge.recordLabel || ''}`.toLowerCase();
+  if (/contraseñ|md5|sha-1/.test(text)) return 'Tipo: Credencial de acceso';
+  if (/\bcvv\b/.test(text)) return 'Tipo: Código CVV de tarjeta';
+  if (/\bpan\b/.test(text)) return 'Tipo: Número de tarjeta (PAN)';
+  if (/aes-ecb|ecb/.test(text)) return 'Tipo: Dato financiero cifrado (ECB)';
+  if (/aes-gcm|nonce/.test(text)) return 'Tipo: Registro cifrado (AES-GCM)';
+  if (/fiscal/.test(text)) return 'Tipo: Dato fiscal recuperable';
+  return 'Tipo: Dato operativo / retención';
+}
+
+function getRecordEmblem(challenge) {
+  const text = `${challenge.title} ${challenge.recordLabel || ''}`.toLowerCase();
+  if (/contraseñ|md5|sha-1/.test(text)) return 'KEY';
+  if (/\bcvv\b/.test(text)) return 'CVV';
+  if (/\bpan\b/.test(text)) return 'PAN';
+  if (/aes-ecb|ecb/.test(text)) return 'ECB';
+  if (/aes-gcm|nonce/.test(text)) return 'GCM';
+  if (/fiscal/.test(text)) return 'TAX';
+  return 'DAT';
+}
+
+function getBucketPrefix(bucketId) {
+  if (bucketId === 'hash_password') return '[Hash] ';
+  if (bucketId === 'authenticated_encryption') return '[Cifrado] ';
+  if (bucketId === 'tokenize_minimize') return '[Token/Min.] ';
+  if (bucketId === 'delete_do_not_store') return '[Eliminar] ';
+  return '';
+}
+
 export function destroy() {
   if (!activeSession) {
     return;
@@ -94,6 +124,10 @@ export function mount(container, levelData, callbacks = {}) {
     return list;
   }
 
+  function formatCount(count) {
+    return count === 1 ? '1 asignado' : `${count} asignados`;
+  }
+
   function renderCompletedSummary() {
     const wrapper = createEl(doc, 'div', 'classifier-layout');
 
@@ -108,23 +142,26 @@ export function mount(container, levelData, callbacks = {}) {
       doc,
       'p',
       'classifier-instructions',
-      'Resumen de los ocho registros asignados durante este intento (✓ correcto, ✕ incorrecto).'
+      'Resumen completo de los ocho registros asignados durante este intento (✓ correcto, ✕ incorrecto).'
     );
     wrapper.appendChild(summaryIntro);
 
     const bucketsGrid = createEl(doc, 'div', 'classifier-buckets');
     for (const bucket of buckets) {
+      const assignedItems = assignedByBucket.get(bucket.id) || [];
       const bucketCard = createEl(doc, 'section', 'bucket-card');
       bucketCard.setAttribute('aria-labelledby', `bucket-summary-heading-${bucket.id}`);
 
       const bucketHeader = createEl(doc, 'div', 'bucket-header');
-      const heading = createEl(doc, 'h3', '', bucket.label);
+      const headerTop = createEl(doc, 'div', 'bucket-header-top');
+      const heading = createEl(doc, 'h3', '', `${getBucketPrefix(bucket.id)}${bucket.label}`);
       heading.id = `bucket-summary-heading-${bucket.id}`;
+      const countBadge = createEl(doc, 'span', 'badge badge--neutral', formatCount(assignedItems.length));
+      headerTop.append(heading, countBadge);
       const desc = createEl(doc, 'p', 'text-muted', bucket.description);
-      bucketHeader.append(heading, desc);
+      bucketHeader.append(headerTop, desc);
       bucketCard.appendChild(bucketHeader);
 
-      const assignedItems = assignedByBucket.get(bucket.id) || [];
       if (assignedItems.length > 0) {
         bucketCard.appendChild(buildAssignedList(bucket.id));
       } else {
@@ -161,11 +198,19 @@ export function mount(container, levelData, callbacks = {}) {
     const challenge = challenges[session.currentIndex];
     session.selectedChallengeId = challenge.id;
 
+    if (typeof callbacks.onProgress === 'function') {
+      callbacks.onProgress({
+        current: session.currentIndex + 1,
+        total: challenges.length,
+        label: `Registro ${session.currentIndex + 1}/${challenges.length}`
+      });
+    }
+
     const wrapper = createEl(doc, 'div', 'classifier-layout');
 
     const progressRow = createEl(doc, 'div', 'classifier-progress');
     progressRow.append(
-      createEl(doc, 'span', '', `Registro ${session.currentIndex + 1} de ${challenges.length}`),
+      createEl(doc, 'span', '', `Registro ${session.currentIndex + 1} de ${challenges.length} · Decide el tratamiento seguro`),
       createEl(doc, 'span', 'badge badge--info', `Objetivo ${challenge.objectiveId}`)
     );
     wrapper.appendChild(progressRow);
@@ -174,12 +219,12 @@ export function mount(container, levelData, callbacks = {}) {
       doc,
       'p',
       'classifier-instructions',
-      'Puedes arrastrar la tarjeta hacia un control en escritorio o usar selección y botones con teclado o toque.'
+      'Elige el destino mediante botones (teclado o toque) o arrastra la tarjeta en escritorio.'
     );
     wrapper.appendChild(instructions);
 
     const deck = createEl(doc, 'div', 'classifier-deck');
-    const card = createEl(doc, 'article', 'data-card is-selected');
+    const card = createEl(doc, 'article', 'data-card vault-pedestal is-selected');
     card.setAttribute('draggable', 'true');
     card.setAttribute('aria-labelledby', `classifier-card-${challenge.id}`);
 
@@ -189,15 +234,21 @@ export function mount(container, levelData, callbacks = {}) {
     selectCardBtn.setAttribute('data-challenge-id', challenge.id);
     selectCardBtn.setAttribute('aria-pressed', 'true');
 
-    const cardBadge = createEl(doc, 'span', 'data-card-badge', `ID simulado: ${challenge.id}`);
-    cardHeader.append(selectCardBtn, cardBadge);
+    // Evidencia neutral sobre la naturaleza del registro (sin revelar respuesta)
+    const typeChip = createEl(doc, 'span', 'evidence-chip', getRecordCategoryTag(challenge));
+    cardHeader.append(selectCardBtn, typeChip);
 
+    const bannerRow = createEl(doc, 'div', 'vault-record-banner');
+    const emblem = createEl(doc, 'span', 'vault-emblem', getRecordEmblem(challenge));
+    emblem.setAttribute('aria-hidden', 'true');
     const cardTitle = createEl(doc, 'h2', '', challenge.title);
     cardTitle.id = `classifier-card-${challenge.id}`;
+    bannerRow.append(emblem, cardTitle);
+
     const cardScenario = createEl(doc, 'p', '', challenge.scenario);
     const recordCode = createEl(doc, 'pre', '', challenge.recordLabel);
 
-    card.append(cardHeader, cardTitle, cardScenario, recordCode);
+    card.append(cardHeader, bannerRow, cardScenario, recordCode);
 
     if (challenge.visualAsset) {
       const figure = createEl(doc, 'figure', 'ecb-visual-figure');
@@ -208,7 +259,7 @@ export function mount(container, levelData, callbacks = {}) {
         doc,
         'figcaption',
         '',
-        'Ilustración de bloques: AES-ECB conserva patrones visibles; AES-GCM con nonce único los oculta y verifica integridad.'
+        'Comparación visual de bloques: AES-ECB conserva patrones repetitivos; AES-GCM con nonce único los oculta y autentica integridad.'
       );
       figure.append(img, caption);
       card.appendChild(figure);
@@ -251,7 +302,7 @@ export function mount(container, levelData, callbacks = {}) {
         doc,
         'p',
         '',
-        `Asignación por botones/teclado: elige el control recomendado para «${challenge.title}».`
+        `Asignación directa: selecciona el control para «${challenge.title}».`
       )
     );
     wrapper.appendChild(assignBar);
@@ -259,6 +310,7 @@ export function mount(container, levelData, callbacks = {}) {
     const bucketsGrid = createEl(doc, 'div', 'classifier-buckets');
     const bucketButtons = [];
     const bucketListSlots = new Map();
+    const bucketCountBadges = new Map();
 
     function handleAssign(bucket) {
       if (!session.active || session.locked) {
@@ -275,16 +327,20 @@ export function mount(container, levelData, callbacks = {}) {
         correctControl: 'Aplica el control acorde a OWASP A04:2025 y PCI DSS.'
       };
 
-      assignedByBucket.get(bucket.id).push({
+      const bucketItems = assignedByBucket.get(bucket.id);
+      bucketItems.push({
         id: challenge.id,
         title: challenge.title,
         isCorrect
       });
 
-      // Actualizar inmediatamente la lista visual del contenedor asignado (incluyendo el 8.º registro)
       const listSlot = bucketListSlots.get(bucket.id);
       if (listSlot) {
         listSlot.replaceChildren(buildAssignedList(bucket.id));
+      }
+      const countBadge = bucketCountBadges.get(bucket.id);
+      if (countBadge) {
+        countBadge.textContent = formatCount(bucketItems.length);
       }
 
       card.classList.add('is-assigned');
@@ -322,18 +378,24 @@ export function mount(container, levelData, callbacks = {}) {
     }
 
     for (const bucket of buckets) {
+      const assignedItems = assignedByBucket.get(bucket.id) || [];
       const bucketCard = createEl(doc, 'section', 'bucket-card');
+      bucketCard.setAttribute('data-chamber', bucket.id);
       bucketCard.setAttribute('aria-labelledby', `bucket-heading-${bucket.id}`);
 
       const bucketHeader = createEl(doc, 'div', 'bucket-header');
-      const heading = createEl(doc, 'h3', '', bucket.label);
+      const headerTop = createEl(doc, 'div', 'bucket-header-top');
+      const heading = createEl(doc, 'h3', '', `${getBucketPrefix(bucket.id)}${bucket.label}`);
       heading.id = `bucket-heading-${bucket.id}`;
+      const countBadge = createEl(doc, 'span', 'badge badge--neutral', formatCount(assignedItems.length));
+      bucketCountBadges.set(bucket.id, countBadge);
+      headerTop.append(heading, countBadge);
+
       const desc = createEl(doc, 'p', 'text-muted', bucket.description);
-      bucketHeader.append(heading, desc);
+      bucketHeader.append(headerTop, desc);
       bucketCard.appendChild(bucketHeader);
 
       const listSlot = createEl(doc, 'div');
-      const assignedItems = assignedByBucket.get(bucket.id) || [];
       if (assignedItems.length > 0) {
         listSlot.appendChild(buildAssignedList(bucket.id));
       }

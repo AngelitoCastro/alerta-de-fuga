@@ -102,7 +102,7 @@ export function mount(container, levelData, callbacks = {}) {
 
     if (session.timeline.length === 0) {
       section.appendChild(
-        createEl(doc, 'p', 'text-muted', 'Aún no registras acciones en este simulacro. Cada elección quedará documentada aquí.')
+        createEl(doc, 'p', 'text-muted', 'Cada decisión quedará registrada aquí junto con sus consecuencias en el simulacro.')
       );
       return section;
     }
@@ -117,7 +117,7 @@ export function mount(container, levelData, callbacks = {}) {
       const statusLabel = entry.isCorrect ? 'Acción adecuada' : `Riesgo (+${entry.exposureDelta} % exposición)`;
       li.append(
         createEl(doc, 'span', 'timeline-entry-phase', `${entry.phase} · ${statusLabel}`),
-        createEl(doc, 'span', 'timeline-entry-decision', entry.label)
+        createEl(doc, 'span', 'timeline-entry-decision', entry.shortTitle || entry.label)
       );
       if (entry.consequenceNote) {
         li.appendChild(createEl(doc, 'span', 'text-muted', entry.consequenceNote));
@@ -140,6 +140,15 @@ export function mount(container, levelData, callbacks = {}) {
     const node = nodes[session.currentNodeId];
     if (!node) {
       return;
+    }
+
+    const phaseIdx = phases.indexOf(node.phase);
+    if (typeof callbacks.onProgress === 'function' && phases.length > 0) {
+      callbacks.onProgress({
+        current: phaseIdx >= 0 ? phaseIdx + 1 : 1,
+        total: phases.length,
+        label: `Fase ${phaseIdx >= 0 ? phaseIdx + 1 : 1}/${phases.length}: ${node.phase}`
+      });
     }
 
     const wrapper = createEl(doc, 'div', 'incident-layout');
@@ -196,9 +205,25 @@ export function mount(container, levelData, callbacks = {}) {
 
     const optionButtons = [];
     for (const option of options) {
-      const btn = createEl(doc, 'button', 'btn option-btn', option.label);
+      const btn = createEl(doc, 'button', 'btn option-btn incident-option-btn');
       btn.type = 'button';
       btn.setAttribute('data-option-id', option.id);
+
+      if (typeof option.shortTitle === 'string' && option.shortTitle.trim()) {
+        const row = createEl(doc, 'span', 'incident-option-row');
+        const keyBadge = createEl(doc, 'span', 'incident-option-key', String(option.id || '').toUpperCase());
+        keyBadge.setAttribute('aria-hidden', 'true');
+        const copy = createEl(doc, 'span', 'incident-option-copy');
+        copy.append(
+          createEl(doc, 'span', 'incident-option-title', option.shortTitle),
+          createEl(doc, 'span', 'incident-option-detail', option.label)
+        );
+        row.append(keyBadge, copy);
+        btn.appendChild(row);
+      } else {
+        btn.textContent = option.label;
+      }
+
       optionButtons.push(btn);
 
       listen(btn, 'click', () => {
@@ -225,6 +250,7 @@ export function mount(container, levelData, callbacks = {}) {
 
         session.timeline.push({
           phase: node.phase,
+          shortTitle: option.shortTitle || '',
           label: option.label,
           isCorrect,
           exposureDelta: option.exposureDelta ?? 0,

@@ -30,6 +30,32 @@ export function normalizeLevelMaxBase(scorableDecisionsCount, standardDecisionsC
   return calculateMaxBaseLevel(effectiveDecisions);
 }
 
+export function getDecisionDelta(prevAttempt, nextAttempt) {
+  const prevBase = isValidFiniteNumber(prevAttempt?.baseScore) ? prevAttempt.baseScore : 0;
+  const nextBase = isValidFiniteNumber(nextAttempt?.baseScore) ? nextAttempt.baseScore : prevBase;
+  const prevTime = isValidFiniteNumber(prevAttempt?.optionalTimeBonus) ? prevAttempt.optionalTimeBonus : 0;
+  const nextTime = isValidFiniteNumber(nextAttempt?.optionalTimeBonus) ? nextAttempt.optionalTimeBonus : prevTime;
+  const prevExp = isValidFiniteNumber(prevAttempt?.exposure) ? prevAttempt.exposure : 0;
+  const nextExp = isValidFiniteNumber(nextAttempt?.exposure) ? nextAttempt.exposure : prevExp;
+  const nextStreak = isValidFiniteNumber(nextAttempt?.streak) ? nextAttempt.streak : 0;
+
+  const baseDelta = Math.max(0, nextBase - prevBase);
+  const streakBonus = baseDelta > 100 ? baseDelta - 100 : 0;
+  const pointsDelta = baseDelta > 0 ? baseDelta - streakBonus : 0;
+  const timeBonusDelta = Math.max(0, nextTime - prevTime);
+  const exposureDelta = Math.max(0, nextExp - prevExp);
+
+  return {
+    baseDelta,
+    pointsDelta,
+    streakBonus,
+    timeBonusDelta,
+    exposureDelta,
+    nextStreak,
+    hitStreakMilestone: streakBonus > 0
+  };
+}
+
 export function calculateTimeBonus(elapsedMs, timerEnabled, maxBonus = 30) {
   if (!timerEnabled) {
     return 0;

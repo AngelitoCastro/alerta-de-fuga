@@ -7,6 +7,12 @@ import {
   syncReducedMotion,
   subscribeReducedMotion
 } from './engine/a11y.js';
+import {
+  initSound,
+  isSoundEnabled,
+  toggleSound,
+  subscribeSound
+} from './engine/sound.js';
 
 import * as inspectorMinigame from './minigames/inspector.js';
 import * as classifierMinigame from './minigames/classifier.js';
@@ -84,6 +90,7 @@ export function initApp() {
 
   const store = createStateStore();
   const dataLoader = createDataLoader({ basePath: './data', cache: true });
+  initSound();
 
   syncReducedMotion(store.getState().settings.reducedMotion);
   subscribeReducedMotion(() => {
@@ -117,12 +124,30 @@ export function initApp() {
   });
 
   const navHomeBtn = doc.getElementById('nav-home-btn');
+  const toggleSoundBtn = doc.getElementById('toggle-sound-btn');
   const openGlossaryBtn = doc.getElementById('open-glossary-btn');
   const openSettingsBtn = doc.getElementById('open-settings-btn');
+
+  function syncSoundButton() {
+    if (!toggleSoundBtn) return;
+    const on = isSoundEnabled();
+    toggleSoundBtn.textContent = on ? 'Silenciar' : 'Activar sonido';
+    toggleSoundBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    toggleSoundBtn.setAttribute('aria-label', on ? 'Silenciar sonido de efectos' : 'Activar sonido de efectos');
+    toggleSoundBtn.classList.toggle('is-active', on);
+  }
+  syncSoundButton();
+  subscribeSound(syncSoundButton);
 
   if (navHomeBtn) {
     navHomeBtn.addEventListener('click', () => {
       router?.navigate(ROUTES.INICIO);
+    });
+  }
+  if (toggleSoundBtn) {
+    toggleSoundBtn.addEventListener('click', () => {
+      const next = toggleSound();
+      announce(next ? 'Sonido activado.' : 'Sonido silenciado.');
     });
   }
   if (openGlossaryBtn) {

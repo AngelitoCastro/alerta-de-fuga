@@ -1,6 +1,20 @@
 .site-header {
-  background-color: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  background-color: rgba(22, 13, 45, 0.94);
+  border-bottom: 2px solid rgba(176, 112, 214, 0.32);
+  box-shadow: 0 6px 24px rgba(17, 8, 40, 0.65);
+  position: relative;
+  z-index: calc(var(--z-sticky) + 1);
+}
+
+.site-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  background-image: linear-gradient(90deg, transparent 0%, rgba(255, 51, 119, 0.75) 28%, rgba(255, 107, 53, 0.75) 68%, transparent 100%);
+  pointer-events: none;
 }
 
 .site-header-inner {
@@ -26,6 +40,7 @@
   flex-shrink: 0;
   width: 2.5rem;
   height: 2.5rem;
+  filter: drop-shadow(0 0 10px rgba(255, 51, 119, 0.3));
 }
 
 .brand-text {
@@ -35,10 +50,12 @@
 }
 
 .brand-title {
+  font-family: var(--font-display);
   font-size: var(--text-lg);
-  font-weight: 700;
-  color: var(--color-text-primary);
+  font-weight: 900;
+  color: var(--color-cream);
   line-height: var(--leading-tight);
+  letter-spacing: 0.01em;
 }
 
 .brand-subtitle {
@@ -63,19 +80,15 @@
   min-width: 0;
 }
 
-.site-main:focus {
-  outline: none;
-}
-
+.site-main:focus,
 .site-main:focus-visible {
-  outline: 3px solid var(--color-info);
-  outline-offset: 2px;
+  outline: none;
 }
 
 .site-footer {
   margin-top: var(--space-8);
-  border-top: 1px solid var(--color-border);
-  background-color: var(--color-surface);
+  border-top: 2px solid var(--color-border);
+  background-color: var(--color-surface-code);
 }
 
 .site-footer-inner {
@@ -98,6 +111,57 @@
   min-width: 0;
 }
 
+/* Portada cinematográfica ilustrada (móvil primero) */
+.hero-cinema {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--color-border-interactive);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  min-width: 0;
+}
+
+.hero-cinema-media {
+  position: relative;
+  min-height: 13.5rem;
+  overflow: hidden;
+  background-color: var(--color-surface-code);
+}
+
+.hero-cinema-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 22%;
+  display: block;
+}
+
+.hero-cinema-scrim {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    180deg,
+    rgba(22, 13, 45, 0.14) 0%,
+    rgba(22, 13, 45, 0.45) 55%,
+    rgba(22, 13, 45, 0.96) 100%
+  );
+  pointer-events: none;
+}
+
+.hero-cinema-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: linear-gradient(180deg, rgba(22, 13, 45, 0.96) 0%, rgba(35, 26, 58, 0.98) 100%);
+  min-width: 0;
+}
+
 .hero-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -114,7 +178,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
-  margin-top: var(--space-4);
+  margin-top: var(--space-2);
 }
 
 .hero-illustration {
@@ -141,10 +205,11 @@
   min-width: 0;
 }
 
+/* Espacio de juego: HUD superior compacto sticky + zona principal limpia */
 .game-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-5);
+  gap: var(--space-4);
   align-items: start;
 }
 
@@ -153,6 +218,89 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  min-width: 0;
+}
+
+/* HUD transversal sticky en móvil y tablet (< 1024px) respetando safe-area */
+@media (max-width: 63.99rem) {
+  .game-sidebar.game-hud {
+    order: -1;
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: var(--z-sticky);
+    padding: var(--space-2) var(--space-3);
+    gap: var(--space-2);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sticky);
+    background-color: rgba(22, 13, 45, 0.96);
+    background-image: none;
+    border: 2px solid var(--color-border-interactive);
+  }
+
+  .game-sidebar.game-hud .hud-heading-row,
+  .game-sidebar.game-hud .hud-secondary-stat,
+  .game-sidebar.game-hud .hud-glossary-btn,
+  .game-sidebar.game-hud .timer-badge,
+  .game-sidebar.game-hud .exposure-status-text {
+    display: none;
+  }
+
+  .game-sidebar.game-hud .hud-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  .game-sidebar.game-hud .hud-stat {
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .game-sidebar.game-hud .hud-stat-value {
+    font-size: var(--text-sm);
+  }
+
+  .game-sidebar.game-hud .exposure-meter {
+    padding: var(--space-2);
+    gap: var(--space-1);
+  }
+
+  .game-sidebar.game-hud .exposure-progress {
+    height: 0.625rem;
+  }
+}
+
+/* Cierre cinematográfico de resultados */
+.results-hero-banner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--color-border-interactive);
+  background-color: var(--color-surface);
+  background-image: var(--gradient-panel);
+  box-shadow: var(--shadow-card);
+  min-width: 0;
+}
+
+.results-hero-media {
+  position: relative;
+  min-height: 13rem;
+  overflow: hidden;
+  background-color: var(--color-surface-code);
+}
+
+.results-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+}
+
+.results-hero-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
   min-width: 0;
 }
 
@@ -168,6 +316,10 @@
     padding-block: var(--space-6);
   }
 
+  .hero-cinema-media {
+    min-height: 18rem;
+  }
+
   .level-roadmap,
   .overview-grid,
   .results-grid {
@@ -177,18 +329,65 @@
 
 /* Escritorio (>= 1024px, probado en 1280x800) */
 @media (min-width: 64rem) {
+  .hero-cinema {
+    min-height: 26rem;
+    align-items: stretch;
+  }
+
+  .hero-cinema-media {
+    position: absolute;
+    inset: 0;
+    min-height: 100%;
+  }
+
+  .hero-cinema-img {
+    object-position: 78% 20%;
+  }
+
+  .hero-cinema-scrim {
+    background-image:
+      linear-gradient(
+        92deg,
+        rgba(22, 13, 45, 0.97) 0%,
+        rgba(22, 13, 45, 0.88) 44%,
+        rgba(22, 13, 45, 0.42) 72%,
+        rgba(22, 13, 45, 0.22) 100%
+      ),
+      linear-gradient(180deg, rgba(22, 13, 45, 0.1) 0%, rgba(22, 13, 45, 0.72) 100%);
+  }
+
+  .hero-cinema-content {
+    max-width: 41rem;
+    padding: var(--space-8);
+    background: transparent;
+    justify-content: center;
+  }
+
   .hero-grid {
     grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
     align-items: center;
   }
 
+  .level-roadmap {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
   .game-workspace {
-    grid-template-columns: minmax(0, 1fr) 21rem;
+    grid-template-columns: minmax(0, 1fr) 21.5rem;
     gap: var(--space-6);
   }
 
   .game-sidebar {
     position: sticky;
     top: var(--space-4);
+  }
+
+  .results-hero-banner {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.15fr);
+    align-items: stretch;
+  }
+
+  .results-hero-media {
+    min-height: 22rem;
   }
 }

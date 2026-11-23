@@ -61,19 +61,24 @@ node --test tests/e2e/tier1-features.test.js tests/e2e/tier2-boundaries.test.js 
 ## 4. Stack y estructura del proyecto
 
 - **Tecnología:** HTML5, CSS3 y JavaScript ES Modules puro. Cero frameworks, cero bundlers, cero CDNs externos y cero dependencias de ejecución.
-- **Seguridad cliente:** archivo `_headers` preparado para Cloudflare Pages / Netlify con CSP estricta (`script-src 'self'`, `style-src 'self'`, sin scripts ni manejadores inline), renderizado seguro por `textContent` y cero secretos o tarjetas reales.
+- **Dirección artística:** **Tropical Cybercrime Thriller** (paleta nocturna violeta `#160D2D`, paneles `#231A3A`/`#2D2545`, acentos atardecer `#FF3377`/`#FF6B35`/`#FFC107`/`#B070D6`, contraste WCAG 2.2 AA verificado) con ilustraciones originales optimizadas localmente en WebP (`assets/hero-cover.webp`, `assets/hero-cover-mobile.webp`, `assets/victory-cover.webp`) y `assets/logo.svg` actualizado.
+- **Seguridad cliente:** cabeceras estrictas configuradas en `_headers` (Cloudflare Pages / Netlify) y `vercel.json` (Vercel) con CSP estricta (`script-src 'self'`, `style-src 'self'`, `img-src 'self' data:`, `font-src 'self'`), renderizado seguro por `textContent` y cero secretos o tarjetas reales.
 - **Privacidad:** el progreso se guarda localmente bajo `alerta_de_fuga_progress_v1` sin datos personales, con opción de restablecimiento confirmado y degradación a memoria si `localStorage` no está disponible.
 
 ```text
 Alerta_de_Fuga/
 ├── index.html
 ├── _headers
+├── vercel.json
 ├── README.md
 ├── assets/
 │   ├── analyst.svg
 │   ├── attacker.svg
 │   ├── ecb-pattern.svg
-│   └── logo.svg
+│   ├── hero-cover.webp
+│   ├── hero-cover-mobile.webp
+│   ├── logo.svg
+│   └── victory-cover.webp
 ├── css/
 │   ├── tokens.css
 │   ├── base.css
@@ -125,7 +130,8 @@ Alerta_de_Fuga/
 
 | Herramienta de IA | Uso concreto | Resultado utilizado | Validación o corrección humana |
 |---|---|---|---|
-| Antigravity (asistente con modelos Gemini) | Configuración de skills/MCP del proyecto, generación de arquitectura modular (motor, datos JSON, estilos, 4 minijuegos, vistas y pruebas automatizadas) y verificación en navegador local | Código fuente en `js/`, `css/`, `assets/`, `data/`, `_headers`, `tests/` y documentación inicial | Pendiente de revisión final del autor antes del despliegue público y entrega académica |
+| Google Stitch | Exploración visual y generación de prototipos de referencia y dos ilustraciones originales (*Tropical Cybercrime Thriller*) para portada y cierre de misión | Guía de tokens `DESIGN.md`, referencias de composición y arte original convertido localmente a `assets/hero-cover*.webp` y `assets/victory-cover.webp` (excluyendo referencias de terceros y eliminando CDNs externos) | Revisión de contraste WCAG 2.2 AA, exclusión de material ajeno y reemplazo por recursos locales compatibles con CSP |
+| Antigravity (asistente con modelos Gemini) | Configuración de skills/MCP del proyecto, arquitectura modular (motor, datos JSON, estilos, 4 minijuegos, vistas y pruebas automatizadas), integración del rediseño visual y verificación en navegador local | Código fuente en `js/`, `css/`, `assets/`, `data/`, `_headers`, `vercel.json`, `tests/` y documentación | Pendiente de revisión final del autor antes del despliegue público y entrega académica |
 
 ---
 

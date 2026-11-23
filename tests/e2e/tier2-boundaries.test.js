@@ -10,6 +10,7 @@ import {
 import {
   REQUIRED_GLOSSARY_IDS,
   ACCENT_FILL_TOKENS,
+  ON_ACCENT_TOKEN,
   OBJECTIVES,
   requireAppFile,
   importAppModule,
@@ -1145,21 +1146,23 @@ describe('Tier 2 — Boundaries, Edge Cases & Error Handling (FEAT-01..FEAT-20, 
   // FEAT-16: Visual & Responsive boundaries
   // =========================================================================
   describe('FEAT-16 Boundaries', () => {
-    test('[T2-F16-1] Primary and secondary text tokens (#F0F6FC, #A8B8C8) meet >= 4.5:1 on #0B1016 and #131B26', async () => {
+    test('[T2-F16-1] Tropical text tokens (#E9DDFF, #E4BDC2, #FCF6EE) meet >= 4.5:1 on #160D2D, #231A3A and #2D2545', async () => {
       await requireAppFile('css/tokens.css');
-      for (const bg of ['#0B1016', '#131B26']) {
-        for (const fg of ['#F0F6FC', '#A8B8C8']) {
+      for (const bg of ['#160D2D', '#231A3A', '#2D2545']) {
+        for (const fg of ['#E9DDFF', '#E4BDC2', '#FCF6EE']) {
           const ratio = contrastRatio(fg, bg);
           assert.ok(ratio >= 4.5, `${fg} on ${bg} contrast ${ratio.toFixed(2)} < 4.5`);
         }
       }
     });
 
-    test('[T2-F16-2] #0B1016 text on all 4 solid accent fills meets >= 4.5:1 while #F0F6FC fails (< 3:1)', async () => {
+    test('[T2-F16-2] On-accent (#110828) text on all solid Tropical accent fills meets >= 4.5:1', async () => {
       await requireAppFile('css/tokens.css');
       for (const fill of ACCENT_FILL_TOKENS) {
-        assert.ok(contrastRatio('#0B1016', fill) >= 4.5);
-        assert.ok(contrastRatio('#F0F6FC', fill) < 3.0);
+        assert.ok(
+          contrastRatio(ON_ACCENT_TOKEN, fill) >= 4.5,
+          `${ON_ACCENT_TOKEN} on ${fill} must meet WCAG AA (>= 4.5:1)`
+        );
       }
     });
 

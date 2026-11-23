@@ -6,6 +6,7 @@ import {
   OBJECTIVES,
   calculateMaxBaseLevel,
   normalizeLevelMaxBase,
+  getDecisionDelta,
   calculateTimeBonus,
   createInitialAttempt,
   applyDecision,
@@ -344,4 +345,65 @@ test('normalizeLevelMaxBase keeps Level 4 fixed at 700 across both optimal (6-st
   assert.equal(optSummary.totalMaxBaseLevel, 3000);
   assert.equal(Number(obsSummary.basePercent.toFixed(1)), 86.7);
   assert.equal(obsSummary.rank, 'Arquitecto Criptográfico');
+});
+
+test('getDecisionDelta derives exact point, streak, time, and exposure deltas without view recalculation', () => {
+  let att = createInitialAttempt(1);
+  const prev1 = att;
+  att = applyDecision(att, { isCorrect: true, objectiveId: 'O1', timerEnabled: true, elapsedMs: 5000 });
+  const d1 = getDecisionDelta(prev1, att);
+  assert.equal(d1.pointsDelta, 100);
+  assert.equal(d1.streakBonus, 0);
+  assert.equal(d1.timeBonusDelta, 25);
+  assert.equal(d1.exposureDelta, 0);
+
+  att = applyDecision(att, { isCorrect: true, objectiveId: 'O1', timerEnabled: false });
+  const prev3 = att;
+  att = applyDecision(att, { isCorrect: true, objectiveId: 'O1', timerEnabled: false });
+  const d3 = getDecisionDelta(prev3, att);
+  assert.equal(d3.pointsDelta, 100);
+  assert.equal(d3.streakBonus, 50);
+  assert.equal(d3.hitStreakMilestone, true);
+
+  const prevMiss = att;
+  att = applyDecision(att, { isCorrect: false, penaltyOnWrongAnswer: 20, objectiveId: 'O1' });
+  const dMiss = getDecisionDelta(prevMiss, att);
+  assert.equal(dMiss.baseDelta, 0);
+  assert.equal(dMiss.exposureDelta, 20);
+  assert.equal(dMiss.nextStreak, 0);
+});
+
+test('sound module defaults to OFF, persists toggle, and never throws when AudioContext is absent', async () => {
+  const {
+    SOUND_STORAGE_KEY,
+    initSound,
+    isSoundEnabled,
+    setSoundEnabled,
+    toggleSound,
+    playCorrect,
+    playError,
+    playLevelComplete
+  } = await import('../js/engine/sound.js');
+
+  const store = new Map();
+  const mockStorage = {
+    getItem: (k) => (store.has(k) ? store.get(k) : null),
+    setItem: (k, v) => store.set(k, String(v))
+  };
+
+  assert.equal(initSound(mockStorage), false);
+  assert.equal(isSoundEnabled(), false);
+  assert.equal(playCorrect(), false);
+
+  assert.equal(toggleSound(mockStorage), true);
+  assert.equal(store.get(SOUND_STORAGE_KEY), 'true');
+  assert.equal(initSound(mockStorage), true);
+
+  // En Node no existe AudioContext: las llamadas deben degradar sin excepciones
+  assert.doesNotThrow(() => playCorrect());
+  assert.doesNotThrow(() => playError());
+  assert.doesNotThrow(() => playLevelComplete());
+
+  setSoundEnabled(false, mockStorage);
+  assert.equal(isSoundEnabled(), false);
 });

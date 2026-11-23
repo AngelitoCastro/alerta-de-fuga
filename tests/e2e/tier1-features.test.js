@@ -10,6 +10,7 @@ import {
   REQUIRED_GLOSSARY_IDS,
   REQUIRED_PALETTE_TOKENS,
   ACCENT_FILL_TOKENS,
+  ON_ACCENT_TOKEN,
   REQUIRED_CSP_DIRECTIVES,
   REQUIRED_LEVEL4_PHASES,
   OBJECTIVES,
@@ -1321,7 +1322,7 @@ describe('Tier 1 — Feature Functional Coverage (FEAT-01..FEAT-20, 100 tests)',
       }
     });
 
-    test('[T1-F16-2] css/tokens.css defines all 9 exact palette colors from plan §8.1', async () => {
+    test('[T1-F16-2] css/tokens.css defines all 10 Tropical Cybercrime Thriller palette colors', async () => {
       const tokensCss = await requireAppFile('css/tokens.css');
       const upper = tokensCss.toUpperCase();
       for (const [name, hex] of Object.entries(REQUIRED_PALETTE_TOKENS)) {
@@ -1329,17 +1330,16 @@ describe('Tier 1 — Feature Functional Coverage (FEAT-01..FEAT-20, 100 tests)',
       }
     });
 
-    test('[T1-F16-3] Solid accent fills paired with #0B1016 meet WCAG AA contrast (>= 4.5:1) while #F0F6FC fails', async () => {
-      await requireAppFile('css/tokens.css');
+    test('[T1-F16-3] Solid accent fills paired with on-accent (#110828) meet WCAG AA contrast (>= 4.5:1)', async () => {
+      const tokensCss = await requireAppFile('css/tokens.css');
+      assert.ok(tokensCss.toUpperCase().includes(ON_ACCENT_TOKEN), `Missing on-accent token ${ON_ACCENT_TOKEN}`);
       for (const fill of ACCENT_FILL_TOKENS) {
-        const darkTextRatio = contrastRatio('#0B1016', fill);
-        const lightTextRatio = contrastRatio('#F0F6FC', fill);
-        assert.ok(darkTextRatio >= 4.5, `#0B1016 on ${fill} contrast ${darkTextRatio.toFixed(2)} must be >= 4.5`);
-        assert.ok(lightTextRatio < 3.0, `#F0F6FC on ${fill} is low contrast (${lightTextRatio.toFixed(2)})`);
+        const darkTextRatio = contrastRatio(ON_ACCENT_TOKEN, fill);
+        assert.ok(darkTextRatio >= 4.5, `${ON_ACCENT_TOKEN} on ${fill} contrast ${darkTextRatio.toFixed(2)} must be >= 4.5`);
       }
     });
 
-    test('[T1-F16-4] All 4 local SVG assets serve HTTP 200 as image/svg+xml with valid <svg>', async () => {
+    test('[T1-F16-4] All local SVG and optimized WebP assets serve HTTP 200 with valid content types', async () => {
       const svgs = ['logo.svg', 'analyst.svg', 'attacker.svg', 'ecb-pattern.svg'];
       for (const s of svgs) {
         await requireAppFile(`assets/${s}`);
@@ -1347,6 +1347,12 @@ describe('Tier 1 — Feature Functional Coverage (FEAT-01..FEAT-20, 100 tests)',
         assert.equal(res.status, 200);
         assert.match(res.headers.get('content-type') || '', /image\/svg\+xml/i);
         assert.match(res.text, /<svg\b/i);
+      }
+      const webps = ['hero-cover.webp', 'hero-cover-mobile.webp', 'victory-cover.webp'];
+      for (const w of webps) {
+        const res = await fetchHttp(server.baseUrl, `/assets/${w}`);
+        assert.equal(res.status, 200, `Expected HTTP 200 for /assets/${w}`);
+        assert.match(res.headers.get('content-type') || '', /image\/webp/i);
       }
     });
 
@@ -1433,7 +1439,7 @@ describe('Tier 1 — Feature Functional Coverage (FEAT-01..FEAT-20, 100 tests)',
   // FEAT-18: Seguridad cliente y _headers
   // =========================================================================
   describe('FEAT-18: Seguridad cliente y _headers', () => {
-    test('[T1-F18-1] _headers serves HTTP 200 and contains exact strict CSP and security headers', async () => {
+    test('[T1-F18-1] _headers and vercel.json serve/contain exact strict CSP and security headers', async () => {
       await requireAppFile('_headers');
       const res = await fetchHttp(server.baseUrl, '/_headers');
       assert.equal(res.status, 200);
@@ -1445,6 +1451,16 @@ describe('Tier 1 — Feature Functional Coverage (FEAT-01..FEAT-20, 100 tests)',
       assert.equal(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
       assert.ok((res.headers.get('permissions-policy') || '').includes('camera=()'));
       assert.match(res.headers.get('strict-transport-security') || '', /max-age=31536000/);
+
+      const vercelCfg = JSON.parse(await requireAppFile('vercel.json'));
+      const vercelHdrs = Object.fromEntries(
+        (vercelCfg?.headers?.[0]?.headers || []).map((h) => [h.key, h.value])
+      );
+      const vercelCsp = vercelHdrs['Content-Security-Policy'] || '';
+      for (const directive of REQUIRED_CSP_DIRECTIVES) {
+        assert.ok(vercelCsp.includes(directive), `Missing CSP directive in vercel.json: ${directive}`);
+      }
+      assert.equal(vercelHdrs['X-Content-Type-Options'], 'nosniff');
     });
 
     test('[T1-F18-2] index.html has zero inline scripts, inline styles, inline handlers, or external CDNs', async () => {

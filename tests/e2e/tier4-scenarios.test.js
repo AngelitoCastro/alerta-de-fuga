@@ -157,7 +157,17 @@ async function runCampaignThroughEngine({
         const g = analyzeLevel4Graph(levelData);
         let route;
         if (level4RouteSelector === 'observations') {
-          route = g.simplePaths.find((p) => p.outcomeType === 'observations' && p.choices.some((c) => !c.option.isCorrect)) || g.simplePaths.find((p) => p.choices.some((c) => !c.option.isCorrect)) || g.simplePaths[0];
+          const pathExposure = (p) =>
+            p.choices.reduce((sum, c) => sum + (c.option.isCorrect ? 0 : (c.option.exposureDelta ?? 0)), 0);
+          route =
+            g.simplePaths.find(
+              (p) =>
+                p.outcomeType === 'observations' &&
+                p.choices.some((c) => !c.option.isCorrect) &&
+                pathExposure(p) < 100
+            ) ||
+            g.simplePaths.find((p) => p.choices.some((c) => !c.option.isCorrect) && pathExposure(p) < 100) ||
+            g.simplePaths[0];
         } else if (level4RouteSelector === 'worst') {
           route = [...g.simplePaths].sort((a, b) => a.choices.filter((c) => c.option.isCorrect).length - b.choices.filter((c) => c.option.isCorrect).length)[0];
         } else {
@@ -249,9 +259,9 @@ describe('Tier 4 — Real-World End-to-End User Journeys (12 scenarios)', () => 
     const { summary } = await runCampaignThroughEngine({
       storage,
       missIndicesByLevel: {
-        1: [0, 1, 2, 4],
-        2: [0, 1, 2, 4, 5],
-        3: [0, 1, 2, 4],
+        1: [1, 2, 5],
+        2: [0, 2, 5],
+        3: [2, 3, 4],
       },
       level4RouteSelector: 'worst',
       postQuizDecisions: OBJECTIVES.map((o) => ({ objectiveId: o, isCorrect: false })),

@@ -28,7 +28,7 @@ const REQUIRED_GLOSSARY_IDS = [
   'csprng',
   'minimizacion-datos'
 ];
-const ALLOWED_PENALTIES = new Set([10, 15, 20, 25]);
+const ALLOWED_PENALTIES = new Set([10, 15, 20, 25, 30, 35]);
 const LEVEL4_PHASES = [
   'Detección',
   'Contención',
@@ -684,4 +684,22 @@ test('Mandatory OWASP A04:2025 & PCI DSS technical accuracy rules are present', 
   const n3r6 = JSON.stringify(n3.challenges.find((c) => c.id === 'n3-r6'));
   assert.match(n3r6, /PKCS#1 v1\.5/i);
   assert.match(n3r6, /RSA-OAEP/i);
+});
+
+test('Recalibrated exposure penalties ensure any 4 mistakes reach 100% breach across Levels 1-4', async () => {
+  for (const lvl of [1, 2, 3]) {
+    const data = await loadJson(`data/levels/nivel-${lvl}.json`);
+    const sorted = data.challenges.map((c) => c.exposureDelta).sort((a, b) => a - b);
+    const minFourMisses = sorted.slice(0, 4).reduce((sum, v) => sum + v, 0);
+    assert.ok(
+      minFourMisses >= 100,
+      `Level ${lvl}: 4 lowest penalties sum ${minFourMisses}%, must be >= 100%`
+    );
+  }
+  const n4 = await loadJson('data/levels/nivel-4.json');
+  const wrongDeltas = Object.values(n4.nodes)
+    .filter((n) => !n.isTerminal)
+    .flatMap((n) => n.options.filter((o) => !o.isCorrect).map((o) => o.exposureDelta));
+  const minFourN4 = wrongDeltas.sort((a, b) => a - b).slice(0, 4).reduce((sum, v) => sum + v, 0);
+  assert.ok(minFourN4 >= 100, `Level 4: 4 lowest wrong option penalties sum ${minFourN4}%, must be >= 100%`);
 });

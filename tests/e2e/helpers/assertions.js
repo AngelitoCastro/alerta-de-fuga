@@ -25,19 +25,22 @@ export const REQUIRED_GLOSSARY_IDS = [
   'minimizacion-datos',
 ];
 
+// Paleta aprobada Tropical Cybercrime Thriller (plan_integracion_diseno_stitch_alerta_de_fuga.md §3)
 export const REQUIRED_PALETTE_TOKENS = {
-  bg: '#0B1016',
-  surface: '#131B26',
-  border: '#2A394A',
-  textPrimary: '#F0F6FC',
-  textSecondary: '#A8B8C8',
-  safe: '#3FB950',
-  warning: '#F0B429',
-  danger: '#FF6B6B',
-  info: '#58A6FF',
+  bg: '#160D2D',
+  surface: '#231A3A',
+  surfaceRaised: '#2D2545',
+  text: '#E9DDFF',
+  textMuted: '#E4BDC2',
+  pink: '#FF3377',
+  coral: '#FF6B35',
+  gold: '#FFC107',
+  lavender: '#B070D6',
+  cream: '#FCF6EE',
 };
 
-export const ACCENT_FILL_TOKENS = ['#3FB950', '#F0B429', '#FF6B6B', '#58A6FF'];
+export const ACCENT_FILL_TOKENS = ['#FF3377', '#FF6B35', '#FFC107', '#34D399', '#FF5C8A', '#FFB2BF'];
+export const ON_ACCENT_TOKEN = '#110828';
 
 export const REQUIRED_CSP_DIRECTIVES = [
   "default-src 'self'",

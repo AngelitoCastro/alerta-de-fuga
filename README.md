@@ -3,7 +3,7 @@
 **Alerta de Fuga** es un juego educativo web estático, accesible y responsive en español en el que asumes el rol de analista junior de ciberseguridad de **NovaPay** (una entidad financiera ficticia) para auditar sistemas simulados frente a **OWASP Top 10:2025 — A04: Fallas Criptográficas**.
 
 - **Enlace público del juego:** `PENDIENTE_DE_DESPLIEGUE`
-- **Repositorio de código fuente:** `PENDIENTE_DE_PUBLICACIÓN`
+- **Repositorio de código fuente:** https://github.com/AngelitoCastro/alerta-de-fuga
 
 ---
 
